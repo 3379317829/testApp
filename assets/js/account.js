@@ -48,13 +48,40 @@
   ];
 
   /* 模拟服务端返回的实名信息来源：真实接入后由学校统一身份认证服务返回。
-     这里覆盖内置演示账号；其余学号从姓名池中按学号确定性地取一个，保证结果稳定。 */
+     这里覆盖内置演示账号；其余学号从姓名池中按学号确定性地取一个（同一学号结果稳定），
+     并避开已被其他账号占用的姓名，保证不同账号的实名姓名不重复。 */
   var MOCK_IDENTITY = {
     '00000000': '系统管理员',
     '20260101': '林晓',
     '20260315': '周雨桐'
   };
-  var MOCK_NAME_POOL = ['林晓', '陈志远', '周雨桐', '黄嘉禾', '苏子墨', '郑一诺', '何思远', '罗嘉言'];
+  var MOCK_NAME_POOL = [
+    '林晓', '陈志远', '周雨桐', '黄嘉禾', '苏子墨', '郑一诺', '何思远', '罗嘉言',
+    '谢知言', '许清和', '邓亦航', '冯月盈', '曾叙白', '彭悦宁', '蒋文岚', '韩沐阳',
+    '唐雨薇', '曹霁明', '沈知遇', '方星野', '宋予安', '袁砚清', '雷佳玥', '邱亦然',
+    '柳承宇', '黎晚舟', '顾南枝', '姜时和', '谭星禾', '陆见深', '舒语桐', '崔明泽',
+    '孟栖迟', '尹清嘉', '毛念安', '郝清越', '孔令仪', '白承运', '关月白', '池映雪'
+  ];
+
+  /** 为一个学号分配演示姓名：先按学号散列定位，若该姓名已被占用则顺延取下一个未占用的 */
+  function mockNameFor(studentId) {
+    var taken = {};
+    rawAccounts().forEach(function (a) {
+      if (a.realName) taken[a.realName] = true;
+    });
+
+    var seed = 0;
+    for (var i = 0; i < studentId.length; i++) {
+      seed = (seed * 31 + studentId.charCodeAt(i)) % 1000003;
+    }
+    var start = seed % MOCK_NAME_POOL.length;
+
+    for (var k = 0; k < MOCK_NAME_POOL.length; k++) {
+      var cand = MOCK_NAME_POOL[(start + k) % MOCK_NAME_POOL.length];
+      if (!taken[cand]) return cand;
+    }
+    return MOCK_NAME_POOL[start];   /* 姓名池用尽时兜底 */
+  }
 
   var SEED_POSTS = [
     {
@@ -294,8 +321,7 @@
       }
 
       /* ↓↓↓ 模拟服务端返回，接入学校统一身份认证后整段删除 ↓↓↓ */
-      var sum = studentId.split('').reduce(function (s, c) { return s + (Number(c) || 0); }, 0);
-      var name = MOCK_IDENTITY[studentId] || MOCK_NAME_POOL[sum % MOCK_NAME_POOL.length];
+      var name = MOCK_IDENTITY[studentId] || mockNameFor(studentId);
       /* ↑↑↑ 模拟结束 ↑↑↑ */
 
       return { ok: true, source: 'mock', data: { studentId: studentId, name: name } };
