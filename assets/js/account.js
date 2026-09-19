@@ -203,10 +203,11 @@
       if (!acc) {
         return { ok: false, message: '该学号尚未开通账号，正在发起身份核验', notRegistered: true };
       }
+      if (!password) return { ok: false, message: '请输入密码' };
+      if (acc.password !== String(password)) {
+        return { ok: false, message: '密码不正确，请使用「我的珠科」APP 的登录密码' };
+      }
       if (acc.status === 'banned') return { ok: false, message: '该账号已被封禁，无法登录' };
-      /* 演示环境不校验密码：密码由「我的珠科」统一身份认证负责，
-         接入后应改为把 credentials 交给服务端核验，前端不比对、不落库。
-         形参 password 保留，用于将来透传给认证服务。 */
       var s = store.all();
       s.session = { accountId: acc.id, at: new Date().toISOString() };
       store.save();
@@ -275,12 +276,21 @@
      * 密码只过一次网络，不在前端留存、不写入本地存储；姓名等实名信息一律以服务端返回为准。
      * 当前版本未接入该服务，以下用本地规则模拟服务端返回结果。
      * ----------------------------------------------------------------------------------- */
-    /** 发起身份核验换取实名信息；未登录（开通账号）时传入待核验的学号 */
-    fetchIdentity: function (studentIdInput) {
+    /** 发起身份核验换取实名信息
+     *  开通账号场景需同时提供密码作为认证凭据（交给认证服务核验）；
+     *  已登录账号直接沿用当前会话——凭据在登录环节已校验过，无需重复输入。 */
+    fetchIdentity: function (studentIdInput, passwordInput) {
       var cur = account.current();
       var studentId = String(studentIdInput || (cur && cur.studentId) || '').trim();
       if (!/^\d{6,14}$/.test(studentId)) {
         return { ok: false, errors: ['请填写有效的学号（6—14 位数字）后再发起核验'] };
+      }
+
+      /* 开通场景：校验认证凭据（此处由模拟服务端判定） */
+      if (passwordInput !== undefined) {
+        var pass = String(passwordInput || '');
+        if (!pass) return { ok: false, errors: ['请输入「我的珠科」APP 的登录密码'] };
+        if (pass.length < 6) return { ok: false, errors: ['学号或密码不正确'] };
       }
 
       /* ↓↓↓ 模拟服务端返回，接入学校统一身份认证后整段删除 ↓↓↓ */
@@ -294,12 +304,14 @@
     /** 身份核验通过后开通账号：学号即登录标识，账号直接视为已实名并建立会话 */
     registerBySSO: function (payload) {
       var studentId = String(payload.studentId || '').trim();
-      /* 演示环境不校验密码：留空时给一个默认值，保证后续仍可用学号登录 */
-      var password = String(payload.password || '') || '123456';
+      var password = String(payload.password || '');
       var name = String(payload.name || '').trim();
 
       if (!/^\d{6,14}$/.test(studentId)) {
         return { ok: false, message: '学号格式不正确，无法开通账号' };
+      }
+      if (password.length < 6) {
+        return { ok: false, message: '请填写「我的珠科」APP 的登录密码（不少于 6 位）' };
       }
       if (!/^[\u4e00-\u9fa5·]{2,10}$/.test(name)) {
         return { ok: false, message: '身份信息不完整，请稍后重试' };

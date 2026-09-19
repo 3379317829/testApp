@@ -268,7 +268,10 @@
 
       /* 模拟一次网络往返；接入真实服务后此处改为请求统一身份认证接口 */
       setTimeout(function () {
-        var auth = A.fetchIdentity(targetId);
+        /* 开通场景要把学号与密码一起交给认证服务核验；已登录账号沿用当前会话 */
+        var auth = signup
+          ? A.fetchIdentity(targetId, signup.password)
+          : A.fetchIdentity(targetId);
         if (!auth.ok) { fail(auth.errors); return; }
 
         /* 开通模式：核验通过即创建账号并直接登录 */
@@ -363,8 +366,8 @@
       doLogin($('#loginUser').value, $('#loginPass').value);
     });
 
-    /* 尚未开通账号：用登录页填写的学号发起核验，通过后自动开通并登录。
-       演示环境不校验密码，只要求填写学号即可进入核验。 */
+    /* 尚未开通账号：用登录页填写的学号与密码发起核验，通过后自动开通并登录。
+       密码是提交给统一身份认证服务的凭据，必须填写。 */
     $('#loginSignup').addEventListener('click', function () {
       var err = $('#loginErr');
       var sid = $('#loginUser').value.trim();
@@ -373,6 +376,12 @@
         err.textContent = '请先填写学号，再发起身份核验';
         err.hidden = false;
         $('#loginUser').focus();
+        return;
+      }
+      if (!$('#loginPass').value) {
+        err.textContent = '请先填写「我的珠科」APP 的登录密码';
+        err.hidden = false;
+        $('#loginPass').focus();
         return;
       }
       err.textContent = '';
