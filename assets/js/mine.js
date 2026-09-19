@@ -132,12 +132,13 @@
   /** 相关服务：同系列的校园应用入口 */
   function serviceBlock() {
     return '<div class="svc-card">' +
+      '<span class="svc-icon" aria-hidden="true">📅</span>' +
       '<div class="svc-main">' +
       '<div class="svc-title">掌上珠科 · 课表水电</div>' +
-      '<div class="svc-desc">同系列校园服务：查看课表、查询宿舍水电余量</div>' +
+      '<div class="svc-desc">查看课表、查询宿舍水电余量</div>' +
       '</div>' +
-      '<a class="btn small primary svc-go" href="https://bbf5dbd30efa49a5902be69c13a65b55.app.workbuddy.link/"' +
-      ' target="_blank" rel="noopener">前往</a>' +
+      '<a class="svc-go" href="https://bbf5dbd30efa49a5902be69c13a65b55.app.workbuddy.link/"' +
+      ' target="_blank" rel="noopener">前往<i>→</i></a>' +
       '</div>';
   }
 
