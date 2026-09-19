@@ -85,9 +85,12 @@ button { font: inherit; cursor: pointer; }
 .notice {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 10px 12px; font-size: 12.5px; color: var(--ink-2); margin-bottom: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px;
 }
 .notice strong { color: var(--brand); }
-.notice-dim { color: var(--muted); display: block; margin-top: 2px; font-size: 11.5px; }
+.notice-key { font-weight: 600; }
+.notice-key time { color: var(--brand); font-variant-numeric: tabular-nums; }
+.notice-dim { color: var(--muted); font-size: 11.5px; }
 
 /* ---------------- 统计卡 ---------------- */
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -181,10 +184,15 @@ button { font: inherit; cursor: pointer; }
 .card-fav { flex: none; border: 0; background: none; font-size: 17px; line-height: 1; opacity: .35; padding: 2px; }
 .card-fav.is-on { opacity: 1; }
 
-.card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+/* 状态徽章与时间详情同行：徽章保持完整，时间文字占余宽并可截断 */
+.card-when { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.card-when .when-text {
+  flex: 1; min-width: 118px; font-size: 12.5px; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .badge {
   font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 3px 9px; white-space: nowrap;
-  display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
 }
 .badge.t-live { color: var(--live); background: var(--live-bg); }
 .badge.t-today { color: var(--today); background: var(--today-bg); }
@@ -199,10 +207,27 @@ button { font: inherit; cursor: pointer; }
 .badge.update { color: var(--soft); background: var(--soft-bg); }
 .badge.warn { color: var(--warn); background: var(--warn-bg); }
 
-.card-time { font-size: 12.5px; color: var(--ink-2); margin-top: 8px; display: flex; gap: 6px; }
-.card-time b { color: var(--brand); font-weight: 700; flex: none; }
-.card-summary { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
-.card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+/* 摘要只留一行，作为材料原文的快速预览；完整内容在详情页 */
+.card-summary {
+  font-size: 12px; color: #7d8798; margin-top: 7px; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* 页脚一行：来源 · 分类 · 可信度，与标签同排 */
+.card-foot {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid #f2f4f7;
+  font-size: 11.5px; color: var(--muted);
+}
+.meta-sep { font-style: normal; color: #d5dae1; }
+.meta-src.lv3 { color: var(--open); font-weight: 600; }
+.meta-src.lv1 { color: var(--warn); }
+.meta-trust { font-weight: 600; }
+.meta-trust.lv-high { color: var(--live); }
+.meta-trust.lv-mid { color: #65a30d; }
+.meta-trust.lv-low { color: #d97706; }
+.meta-trust.lv-risk { color: var(--danger); }
+.card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-left: auto; }
 .tag { font-size: 11px; color: var(--muted); background: #f7f8fa; border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; }
 
 .trust { margin-top: 9px; display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }

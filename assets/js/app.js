@@ -451,28 +451,40 @@
     else if (it.risk && it.risk.level === 'medium') cls += ' is-risk-medium';
     if (it.isUpdate) cls += ' is-update';
 
-    var badges = '<span class="badge t-' + st.tone + '">' + esc(st.label) + '</span>';
-    if (it.isUpdate) badges += '<span class="badge update">变更通知</span>';
-    badges += '<span class="badge src lv' + src.level + '">' + esc(src.label) + '</span>';
-    badges += '<span class="badge t-muted">' + esc(it.categoryLabel) + '</span>';
-    if (it.risk) badges += '<span class="badge risk">' + esc(it.risk.type) + '</span>';
-    if (it.eligibility && it.eligibility.ok === 'no') badges += '<span class="badge warn">你不符合</span>';
+    /* 只有需要一眼看到的状态与例外标记保留为徽章 */
+    var flags = '<span class="badge t-' + st.tone + '">' + esc(st.label) + '</span>';
+    if (it.isUpdate) flags += '<span class="badge update">变更通知</span>';
+    if (it.risk) flags += '<span class="badge risk">' + esc(it.risk.type) + '</span>';
+    if (it.eligibility && it.eligibility.ok === 'no') flags += '<span class="badge warn">不符合条件</span>';
 
-    var tags = (it.tags || []).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
-    if (it.authorLabel) tags += '<span class="tag">实名：' + esc(it.authorLabel) + '</span>';
+    /* 来源、分类、可信度收进一行小字，不再各占一个徽章 */
+    var meta = '<span class="meta-src lv' + src.level + '">' + esc(src.label) + '</span>' +
+      '<i class="meta-sep">·</i><span>' + esc(it.categoryLabel) + '</span>' +
+      '<i class="meta-sep">·</i><span class="meta-trust lv-' + sc.level + '">可信度 ' + sc.score + '</span>';
 
-    return '<article class="' + cls + '" data-id="' + it.id + '" tabindex="0" role="button" aria-label="' + esc(it.title) + '">' +
+    /* 标签只留最相关的两个：实名信息优先，其次材料自带标签 */
+    var tagTexts = (it.tags || []).slice();
+    if (it.authorLabel) tagTexts.unshift('实名：' + it.authorLabel);
+    var tags = tagTexts.slice(0, 2).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
+
+    /* 详情页保留完整句；卡片上徽章已给出状态，剥掉重复的状态前缀 */
+    var when = st.detail || '';
+    if (when.indexOf(st.label) === 0) {
+      when = when.slice(st.label.length).replace(/^[，,、·\s]+/, '');
+    }
+
+    var label = esc(it.title) + '，' + esc(st.label) + (when ? ('，' + esc(when)) : '');
+
+    return '<article class="' + cls + '" data-id="' + it.id + '" tabindex="0" role="button" aria-label="' + label + '">' +
       '<div class="card-top">' +
         '<span class="card-no">' + it.id + '</span>' +
         '<h3 class="card-title">' + esc(it.title) + '</h3>' +
         '<button class="card-fav' + (fav ? ' is-on' : '') + '" data-fav="' + it.id + '" title="收藏" aria-label="收藏">' +
           (fav ? '★' : '☆') + '</button>' +
       '</div>' +
-      '<div class="card-meta">' + badges + '</div>' +
-      '<div class="card-time"><b>' + esc(st.label) + '</b><span>' + esc(st.detail || '') + '</span></div>' +
+      '<div class="card-when">' + flags + '<span class="when-text">' + esc(when) + '</span></div>' +
       '<div class="card-summary">' + esc(it.raw) + '</div>' +
-      (tags ? '<div class="card-tags">' + tags + '</div>' : '') +
-      trustBarHtml(sc) +
+      '<div class="card-foot">' + meta + (tags ? '<span class="card-tags">' + tags + '</span>' : '') + '</div>' +
     '</article>';
   }
 
