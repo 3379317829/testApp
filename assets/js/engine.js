@@ -18,12 +18,12 @@
     ongoing: { key: 'ongoing', label: '正在进行', tone: 'live', rank: 0 },
     today: { key: 'today', label: '今天开始', tone: 'today', rank: 1 },
     soon: { key: 'soon', label: '即将截止', tone: 'urgent', rank: 2 },
-    open: { key: 'open', label: '还在报名', tone: 'open', rank: 3 },
+    open: { key: 'open', label: '报名中', tone: 'open', rank: 3 },
     waitlist: { key: 'waitlist', label: '报名截止，可候补', tone: 'soft', rank: 4 },
     upcoming: { key: 'upcoming', label: '即将开始', tone: 'open', rank: 5 },
     longterm: { key: 'longterm', label: '长期有效', tone: 'soft', rank: 6 },
     replay: { key: 'replay', label: '已结束 · 待回放', tone: 'soft', rank: 7 },
-    unknown: { key: 'unknown', label: '没写时间', tone: 'muted', rank: 8 },
+    unknown: { key: 'unknown', label: '时间未提供', tone: 'muted', rank: 8 },
     closed: { key: 'closed', label: '报名已截止', tone: 'muted', rank: 9 },
     ended: { key: 'ended', label: '已结束', tone: 'muted', rank: 10 }
   };
@@ -96,7 +96,7 @@
       var end = c.ends.length ? c.ends[c.ends.length - 1].at : s + 4 * 3600000;
       if (s <= now && now <= end) {
         return Object.assign({}, STATUS.ongoing, {
-          detail: '正在进行，' + (c.ends.length ? '预计 ' + fmt(c.ends[c.ends.length - 1].t.at) + ' 结束' : '没说几点结束')
+          detail: '正在进行，' + (c.ends.length ? '预计 ' + fmt(c.ends[c.ends.length - 1].t.at) + ' 结束' : '结束时间未提供')
         });
       }
     }
@@ -128,15 +128,15 @@
       var futureStart = c.starts.filter(function (s) { return s.at > now; })[0];
       if (item.signup && item.signup.unsure && futureStart) {
         return Object.assign({}, STATUS.waitlist, {
-          detail: '报名 ' + fmt(c.deadlines[0].t.at) + ' 就截止了，' + (item.requirement.indexOf('候补') > -1 ? '但可以到现场碰碰运气' : '后面有新通知再看')
+          detail: '报名已于 ' + fmt(c.deadlines[0].t.at) + ' 截止，' + (item.requirement.indexOf('候补') > -1 ? '可现场候补入场' : '请关注后续通知')
         });
       }
       if (futureStart) {
         return Object.assign({}, STATUS.closed, {
-          detail: '报名关了，活动 ' + fmt(futureStart.t.at) + ' 才开始'
+          detail: '报名已截止，活动 ' + fmt(futureStart.t.at) + ' 开始'
         });
       }
-      return Object.assign({}, STATUS.ended, { detail: '报名和活动都结束了' });
+      return Object.assign({}, STATUS.ended, { detail: '报名与活动均已结束' });
     }
 
     /* 5) 无截止时间 */
@@ -164,10 +164,10 @@
 
     /* 8) 时间未提供 */
     if (c.unknownTime || !c.starts.length) {
-      return Object.assign({}, STATUS.unknown, { detail: '材料里没写时间，具体得问发布方' });
+      return Object.assign({}, STATUS.unknown, { detail: '材料未提供明确时间，请以发布方通知为准' });
     }
 
-    return Object.assign({}, STATUS.ended, { detail: '活动已经结束了' });
+    return Object.assign({}, STATUS.ended, { detail: '活动已结束' });
   }
 
   /* ---------------- 可信度评分（自主设计功能 A） ---------------- */
@@ -212,16 +212,16 @@
     score = Math.max(5, Math.min(100, score));
 
     var level, label;
-    if (score >= 85) { level = 'high'; label = '写得挺全'; }
-    else if (score >= 60) { level = 'mid'; label = '信息还算全'; }
-    else if (score >= 40) { level = 'low'; label = '信息有点少'; }
-    else { level = 'risk'; label = '先别太当真'; }
+    if (score >= 85) { level = 'high'; label = '信息完整'; }
+    else if (score >= 60) { level = 'mid'; label = '信息较完整'; }
+    else if (score >= 40) { level = 'low'; label = '信息有限'; }
+    else { level = 'risk'; label = '请谨慎参考'; }
 
     /* 待确认项：场地待定、报名待审核、时间模糊等 */
     var pending = [];
-    if (item.place && item.place.status === 'pending') pending.push('地点还没定下来');
-    if (item.signup && item.signup.unsure) pending.push('报名之后还要等审核通知');
-    (item.times || []).forEach(function (t) { if (t.approximate) pending.push('时间说得比较含糊'); });
+    if (item.place && item.place.status === 'pending') pending.push('场地待确认');
+    if (item.signup && item.signup.unsure) pending.push('报名结果待审核');
+    (item.times || []).forEach(function (t) { if (t.approximate) pending.push('时间为预计或模糊表述'); });
 
     return {
       score: score,
@@ -304,7 +304,7 @@
       }
       var oldPlace = (item.place && item.place.status === 'known') ? item.place.text : null;
       if (o.place && o.place.status === 'known' && oldPlace !== o.place.text) {
-        changes.push({ field: '地点', from: oldPlace || '原来的通知里没说', to: o.place.text, updateId: o.id });
+        changes.push({ field: '地点', from: oldPlace || '原通知未提供', to: o.place.text, updateId: o.id });
       }
       if (o.capacity && /满/.test(o.capacity.text || '')) {
         changes.push({ field: '名额', from: '原通知未限制', to: o.capacity.text, updateId: o.id });

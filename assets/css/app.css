@@ -337,3 +337,91 @@ button { font: inherit; cursor: pointer; }
   .stats { gap: 10px; }
   .card { padding: 14px; }
 }
+
+/* ============================================================
+ * 登录页
+ * ============================================================ */
+.profile-btn { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+body.login-mode { padding-bottom: 0; }
+body.login-mode .wrap,
+body.login-mode .tabbar { display: none; }
+
+.login {
+  position: fixed; inset: 0; z-index: 90;
+  background: linear-gradient(150deg, #ff6b4a, #ff9f45 55%, #ffb36b);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 26px 16px 30px; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.login-card {
+  width: 100%; max-width: 392px; background: var(--surface);
+  border-radius: 18px; padding: 22px 18px 18px;
+  box-shadow: 0 18px 50px rgba(80, 30, 10, .28);
+}
+.login-brand { font-size: 22px; font-weight: 800; letter-spacing: .5px; display: flex; align-items: center; gap: 8px; }
+.login-brand span { font-size: 26px; }
+.login-sub { margin: 4px 0 18px; font-size: 13px; color: var(--muted); }
+.login form .field-row { margin-bottom: 12px; }
+.login-err {
+  background: var(--danger-bg); color: var(--danger); font-size: 12.5px;
+  border-radius: 8px; padding: 8px 10px; margin: 0 0 10px;
+}
+.login #loginSubmit { width: 100%; }
+.login-demo { margin-top: 18px; border-top: 1px dashed var(--line); padding-top: 14px; }
+.login-demo-title { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+.demo-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  border: 1px solid var(--line); background: #fafbfc; border-radius: 10px;
+  padding: 9px 11px; margin-bottom: 7px; transition: all .15s;
+}
+.demo-item:hover { border-color: var(--brand); background: var(--brand-soft); }
+.demo-item b { font-size: 13px; color: var(--brand); flex: none; }
+.demo-item span { font-size: 13px; color: var(--ink); font-family: ui-monospace, Consolas, monospace; }
+.demo-item em { margin-left: auto; font-size: 11.5px; color: var(--muted); font-style: normal; flex: none; }
+.login-note { font-size: 11.5px; color: var(--muted); line-height: 1.75; margin: 10px 0 0; }
+
+/* ============================================================
+ * 后台管理
+ * ============================================================ */
+.admin-stats { grid-template-columns: repeat(2, 1fr); margin-bottom: 12px; }
+@media (min-width: 520px) { .admin-stats { grid-template-columns: repeat(4, 1fr); } }
+
+.admin-block { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+.admin-block:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.admin-h3 { font-size: 15px; margin-bottom: 8px; }
+.admin-form { display: grid; gap: 0 10px; }
+@media (min-width: 560px) { .admin-form { grid-template-columns: 1fr 1fr; } }
+
+.acct {
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 10px; margin-bottom: 8px; background: #fcfcfd;
+}
+.acct.is-banned { border-left: 4px solid var(--urgent); background: #fffafa; }
+.acct-head { display: flex; align-items: flex-start; gap: 8px; }
+.acct-main { flex: 1; min-width: 0; }
+.acct-name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.acct-me { font-size: 10.5px; font-weight: 600; color: var(--open); background: var(--open-bg); border-radius: 6px; padding: 1px 6px; }
+.acct-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.acct-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.acct-actions { flex: none; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.btn.danger-ghost { color: var(--danger); border-color: #f3c9c9; background: #fff; }
+.btn.danger-ghost:hover { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+
+.confirm-bar {
+  margin-top: 10px; padding: 9px 10px; border-radius: 8px;
+  background: var(--warn-bg); border: 1px solid #f2dfae;
+  font-size: 12.5px; color: var(--warn);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+}
+.confirm-bar span { flex: 1 1 100%; }
+
+.acct-posts {
+  margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.acct-post {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff;
+}
+.acct-post-main { flex: 1; min-width: 0; }

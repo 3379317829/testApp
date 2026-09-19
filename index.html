@@ -19,8 +19,8 @@
         <small>校园里的活动、比赛、招募，一处看全</small>
       </span>
     </div>
-    <button class="profile-btn" id="profileBtn" type="button" title="设置我的情况">
-      <span id="profileSummary">大一 · 零基础</span>
+    <button class="profile-btn" id="profileBtn" type="button" title="账号与设置">
+      <span id="userLabel">未登录</span>
     </button>
   </div>
 </header>
@@ -72,6 +72,11 @@
     <div id="publishBody"></div>
   </section>
 
+  <section id="adminPanel" class="panel hidden">
+    <h2 class="panel-title">后台管理</h2>
+    <div id="adminBody"></div>
+  </section>
+
   <footer class="foot">
     <p>掌上猪科 · 珠海科技学院计算机协会软件部 2026 秋季纳新第二轮考核作品</p>
     <p class="foot-dim">材料为考核模拟信息，不代表学校真实通知</p>
@@ -82,9 +87,49 @@
   <button class="tab is-active" data-view="discover" type="button"><span aria-hidden="true">🧭</span>发现</button>
   <button class="tab" data-view="publish" type="button"><span aria-hidden="true">📣</span>发布</button>
   <button class="tab" data-view="mine" type="button"><span aria-hidden="true">⭐</span>我的<span class="badge-dot" id="mineDot"></span></button>
+  <button class="tab hidden" data-view="admin" id="tabAdmin" type="button"><span aria-hidden="true">🛠️</span>后台</button>
 </nav>
 
-<!-- 详情弹层 -->
+<!-- 登录页：未登录时整页展示 -->
+<section class="login" id="loginView" hidden>
+  <div class="login-card">
+    <div class="login-brand"><span aria-hidden="true">🐷</span> 掌上猪科</div>
+    <p class="login-sub">校园活动与机会 · 账号登录</p>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field-row">
+        <label for="loginUser">用户名</label>
+        <input id="loginUser" type="text" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="field-row">
+        <label for="loginPass">密码</label>
+        <input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <p class="login-err" id="loginErr" hidden></p>
+      <button class="btn primary" id="loginSubmit" type="submit">登录</button>
+    </form>
+
+    <div class="login-demo">
+      <div class="login-demo-title">演示账号（点击自动填入）</div>
+      <button type="button" class="demo-item" data-fill="admin">
+        <b>管理员</b>
+        <span>admin / admin123</span>
+        <em>登录后可进入后台</em>
+      </button>
+      <button type="button" class="demo-item" data-fill="student">
+        <b>学生</b>
+        <span>zhuke / 123456</span>
+        <em>林晓 · 学号 20260101</em>
+      </button>
+      <p class="login-note">
+        本功能为本地演示：账号绑定学号、采用实名制，账号数据仅用于展示登录、实名发布与后台管理流程，
+        不做真实身份校验，也不与学校系统对接。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 活动详情弹层 -->
 <div class="sheet-mask" id="sheetMask" hidden></div>
 <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="活动详情" hidden>
   <div class="sheet-head">
@@ -94,7 +139,16 @@
   <div class="sheet-body" id="sheetBody"></div>
 </aside>
 
-<!-- 个人信息弹层 -->
+<!-- 账号弹层 -->
+<aside class="sheet" id="accountSheet" role="dialog" aria-modal="true" aria-label="我的账号" hidden>
+  <div class="sheet-head">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <button class="sheet-close" id="accountClose" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="sheet-body" id="accountBody"></div>
+</aside>
+
+<!-- 我的情况弹层 -->
 <aside class="sheet" id="profileSheet" role="dialog" aria-modal="true" aria-label="我的情况" hidden>
   <div class="sheet-head">
     <div class="sheet-grip" aria-hidden="true"></div>
@@ -107,11 +161,13 @@
 
 <script src="assets/js/data.js"></script>
 <script src="assets/js/store.js"></script>
+<script src="assets/js/account.js"></script>
 <script src="assets/js/engine.js"></script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/detail.js"></script>
 <script src="assets/js/mine.js"></script>
 <script src="assets/js/publish.js"></script>
+<script src="assets/js/admin.js"></script>
 <script>ZHUKE.boot();</script>
 </body>
 </html>

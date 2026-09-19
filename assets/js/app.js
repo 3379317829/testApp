@@ -8,6 +8,7 @@
   var DATA = global.ZHUKE_DATA;
   var E = global.ZHUKE.engine;
   var store = global.ZHUKE.store;
+  var A = global.ZHUKE.account;
 
   /* ---------------- 全局应用状态 ---------------- */
   var S = {
@@ -40,10 +41,10 @@
   var closeTimer = null;
 
   function openSheet(which) {
-    var map = { detail: '#sheet', profile: '#profileSheet' };
+    var map = { detail: '#sheet', profile: '#profileSheet', account: '#accountSheet' };
     var sheet = $(map[which] || '#sheet');
     if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
-    ['#sheet', '#profileSheet'].forEach(function (sel) {
+    ['#sheet', '#profileSheet', '#accountSheet'].forEach(function (sel) {
       var el = $(sel);
       el.classList.remove('is-closing');
       if (el !== sheet) el.hidden = true;
@@ -55,7 +56,7 @@
 
   /** 关闭弹层：先播放收起动画，再真正移除；遮罩与滚动锁同步复位 */
   function closeSheets() {
-    var open = ['#sheet', '#profileSheet'].map(function (sel) { return $(sel); })
+    var open = ['#sheet', '#profileSheet', '#accountSheet'].map(function (sel) { return $(sel); })
       .filter(function (el) { return el && !el.hidden; });
     $('#sheetMask').hidden = true;
     document.body.classList.remove('no-scroll');
@@ -78,6 +79,7 @@
     $$('.tab').forEach(function (b) { b.classList.toggle('is-active', b.dataset.view === view); });
     $('#minePanel').classList.toggle('hidden', view !== 'mine');
     $('#publishPanel').classList.toggle('hidden', view !== 'publish');
+    $('#adminPanel').classList.toggle('hidden', view !== 'admin');
 
     /* 发现页的模块在非发现视图下隐藏，避免重复长列表 */
     var discoverBlocks = ['#dataNotice', '#stats', '.panel[aria-label="筛选"]', '#list'];
@@ -88,24 +90,159 @@
 
     if (view === 'mine' && global.ZHUKE.mine) global.ZHUKE.mine.render();
     if (view === 'publish' && global.ZHUKE.publish) global.ZHUKE.publish.render();
+    if (view === 'admin' && global.ZHUKE.admin) global.ZHUKE.admin.render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ---------------- 顶栏：个人情况 ---------------- */
+  /* ---------------- 顶栏：账号 ---------------- */
   var GRADES = E.GRADE_ORDER;
   var LEVELS = ['零基础', '有基础'];
   var HOURS = [2, 4, 6, 8, 10];
 
-  function renderProfileSummary() {
+  /** 顶栏右侧显示当前账号（实名 + 学号后四位） */
+  function renderUserChip() {
+    var acc = A.current();
+    var el = $('#userLabel');
+    if (!el) return;
+    if (!acc) { el.textContent = '未登录'; return; }
+    el.textContent = acc.realName + ' · ' + A.maskStudentId(acc.studentId) +
+      (acc.role === 'admin' ? ' · 管理员' : '');
+  }
+
+  /** 账号弹层：身份信息、去后台、退出登录 */
+  function renderAccountSheet() {
+    var acc = A.current();
+    var body = $('#accountBody');
+    if (!acc) return;
+    var role = A.ROLES[acc.role] || A.ROLES.student;
+    var status = A.STATUS[acc.status] || A.STATUS.active;
+    var myPosts = A.postsOf(acc.id).length;
     var p = store.profile();
-    $('#profileSummary').textContent = p.grade + ' · ' + p.level + ' · 每周 ' + p.hours + 'h';
+
+    var html = '';
+    html += '<h2 class="detail-title">我的账号</h2>';
+    html += '<div class="detail-badges">' +
+      '<span class="badge src lv' + (acc.role === 'admin' ? 3 : 1) + '">' + esc(role.label) + '</span>' +
+      '<span class="badge t-' + status.tone + '">' + esc(status.label) + '</span>' +
+      '<span class="badge t-muted">实名制</span>' +
+      '</div>';
+
+    html += '<dl style="margin:12px 0 0">' +
+      kvRow('姓名', acc.realName + '（实名）') +
+      kvRow('学号', acc.studentId) +
+      kvRow('用户名', acc.username) +
+      kvRow('我发布的', myPosts + ' 条') +
+      kvRow('我的情况', p.grade + ' · ' + p.level + ' · 每周 ' + p.hours + ' 小时') +
+      '</dl>';
+
+    html += '<div class="callout info" style="margin-top:12px">账号已绑定学号并完成实名登记，' +
+      '发布的内容会显示发布者实名信息，便于同学判断信息来源。</div>';
+
+    if (acc.status === 'banned') {
+      html += '<div class="callout danger" style="margin-top:10px">该账号已被封禁：' +
+        esc(acc.banReason || '违反平台规范') + '</div>';
+    }
+
+    html += '<div class="actions">' +
+      '<button class="btn ghost" id="acctProfile" type="button">修改我的情况</button>' +
+      (acc.role === 'admin' ? '<button class="btn primary" id="acctAdmin" type="button">进入后台</button>' : '') +
+      '<button class="btn" id="acctLogout" type="button">退出登录</button>' +
+      '</div>';
+
+    body.innerHTML = html;
+
+    $('#acctProfile').addEventListener('click', function () {
+      renderProfileSheet();
+      openSheet('profile');
+    });
+    var adminBtn = $('#acctAdmin');
+    if (adminBtn) {
+      adminBtn.addEventListener('click', function () {
+        closeSheets();
+        setView('admin');
+      });
+    }
+    $('#acctLogout').addEventListener('click', function () {
+      A.logout();
+      closeSheets();
+      renderUserChip();
+      showLogin();
+      toast('已退出登录');
+    });
+  }
+
+  function kvRow(label, value) {
+    return '<div class="kv"><dt>' + label + '</dt><dd>' + esc(value) + '</dd></div>';
+  }
+
+  /* ---------------- 登录门禁 ---------------- */
+  function showLogin() {
+    document.body.classList.add('login-mode');
+    var lv = $('#loginView');
+    lv.hidden = false;
+    $('#loginErr').hidden = true;
+    var u = $('#loginUser');
+    if (u) u.focus();
+  }
+
+  function hideLogin() {
+    document.body.classList.remove('login-mode');
+    $('#loginView').hidden = true;
+  }
+
+  function doLogin(username, password) {
+    var res = A.login(username, password);
+    var err = $('#loginErr');
+    if (!res.ok) {
+      err.textContent = res.message;
+      err.hidden = false;
+      return false;
+    }
+    err.hidden = true;
+    $('#loginPass').value = '';
+    hideLogin();
+    startApp();
+    toast('欢迎回来，' + res.account.realName);
+    return true;
+  }
+
+  /** 登录后初始化应用（含管理员入口） */
+  function startApp() {
+    renderUserChip();
+    renderStats();
+    renderSelects();
+    renderQuick();
+    render();
+    var isAdmin = A.isAdmin();
+    $('#tabAdmin').classList.toggle('hidden', !isAdmin);
+    if (S.view === 'admin' && !isAdmin) setView('discover');
+    if (global.ZHUKE.mine) global.ZHUKE.mine.render();
+    if (global.ZHUKE.publish) global.ZHUKE.publish.render();
+    if (global.ZHUKE.admin && isAdmin) global.ZHUKE.admin.render();
+  }
+
+  function bindLogin() {
+    $('#loginForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      doLogin($('#loginUser').value, $('#loginPass').value);
+    });
+
+    $$('#loginView .demo-item').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var isAdmin = btn.dataset.fill === 'admin';
+        $('#loginUser').value = isAdmin ? 'admin' : 'zhuke';
+        $('#loginPass').value = isAdmin ? 'admin123' : '123456';
+        $('#loginErr').hidden = true;
+        $('#loginSubmit').focus();
+      });
+    });
   }
 
   function renderProfileSheet() {
     var p = store.profile();
     var html = '';
     html += '<h2 class="detail-title">设置我的情况</h2>';
-    html += '<p class="form-hint" style="margin-bottom:14px">用来筛哪些活动你够条件。</p>';
+    html += '<p class="form-hint" style="margin-bottom:14px">用于「只看我能参加的」资格筛选。</p>';
 
     html += '<div class="field-row"><label>我的年级</label><div class="pill-row" id="pickGrade">';
     GRADES.forEach(function (g) {
@@ -141,7 +278,7 @@
         var patch = {};
         patch[key] = cast ? cast(b.dataset.v) : b.dataset.v;
         store.setProfile(patch);
-        renderProfileSummary();
+        renderUserChip();
         render();
         if (global.ZHUKE.detail && global.ZHUKE.detail.isOpen()) global.ZHUKE.detail.refresh();
       });
@@ -153,15 +290,15 @@
     $('#profileDone').addEventListener('click', function () {
       store.setOnboarded();
       closeSheets();
-      toast('好，按新情况重新算了一遍');
+      toast('已按最新情况重新判断资格');
     });
     $('#profileReset').addEventListener('click', function () {
-      if (!window.confirm('收藏、报名记录、你发过的内容、还有这些设置都会删掉，确定吗？')) return;
+      if (!window.confirm('将清空本机收藏、报名记录、发布内容与个人设置，是否继续？')) return;
       store.reset();
-      renderProfileSummary();
+      renderUserChip();
       render();
       if (global.ZHUKE.mine) global.ZHUKE.mine.render();
-      toast('都清掉了');
+      toast('数据已清空');
     });
   }
 
@@ -243,6 +380,7 @@
     if (it.eligibility && it.eligibility.ok === 'no') badges += '<span class="badge warn">你不符合</span>';
 
     var tags = (it.tags || []).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
+    if (it.authorLabel) tags += '<span class="tag">实名：' + esc(it.authorLabel) + '</span>';
 
     return '<article class="' + cls + '" data-id="' + it.id + '" tabindex="0" role="button" aria-label="' + esc(it.title) + '">' +
       '<div class="card-top">' +
@@ -273,7 +411,7 @@
     $('#resultCount').textContent = '共 ' + decorated.length + ' 条';
     $('#list').innerHTML = decorated.length
       ? decorated.map(cardHtml).join('')
-      : '<div class="empty"><span>🫥</span>没有符合条件的，换个条件或者清掉搜索词试试。</div>';
+      : '<div class="empty"><span>🫥</span>没有符合条件的信息，请调整筛选条件或搜索关键词。</div>';
 
     var mineCount = store.favorites().length + store.joinedList().length + store.myPosts().length;
     $('#mineDot').classList.toggle('is-on', mineCount > 0);
@@ -309,7 +447,7 @@
       renderSelects();
       renderQuick();
       render();
-      toast('筛选清空了');
+      toast('筛选条件已重置');
     });
 
     $('#list').addEventListener('click', function (ev) {
@@ -341,10 +479,11 @@
     });
 
     $('#profileBtn').addEventListener('click', function () {
-      renderProfileSheet();
-      openSheet('profile');
+      renderAccountSheet();
+      openSheet('account');
     });
     $('#profileClose').addEventListener('click', closeSheets);
+    $('#accountClose').addEventListener('click', closeSheets);
     $('#sheetClose').addEventListener('click', closeSheets);
     $('#sheetMask').addEventListener('click', closeSheets);
     document.addEventListener('keydown', function (ev) {
@@ -354,35 +493,44 @@
 
   /* ---------------- 启动 ---------------- */
   function boot() {
-    if (!DATA || !E || !store) {
+    if (!DATA || !E || !store || !A) {
       document.body.innerHTML = '<p style="padding:24px">数据或引擎加载失败，请刷新页面。</p>';
       return;
     }
     var d = new Date(S.now);
     $('#nowLabel').textContent = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
-    renderProfileSummary();
-    renderStats();
-    renderSelects();
-    renderQuick();
-    render();
+    A.ensureSeed();
     bindEvents();
-
-    /* 首次访问提示设置个人情况（影响资格判断） */
-    if (!store.isOnboarded()) {
-      setTimeout(function () {
-        renderProfileSheet();
-        openSheet('profile');
-      }, 600);
-    }
+    bindLogin();
 
     if (global.ZHUKE.mine) global.ZHUKE.mine.init();
     if (global.ZHUKE.publish) global.ZHUKE.publish.init();
 
-    if (global.console) {
-      console.log('%c掌上猪科 已启动', 'color:#ff6b4a;font-weight:700',
-        '｜数据 ' + DATA.items.length + ' 条｜当前时间 ' + d.toLocaleString('zh-CN'));
+    /* 未登录先走登录页；登录成功后再初始化应用主体 */
+    if (!A.current()) {
+      showLogin();
+    } else {
+      hideLogin();
+      startApp();
+      maybeOnboard();
     }
+
+    if (global.console) {
+      var cur = A.current();
+      console.log('%c掌上猪科 已启动', 'color:#ff6b4a;font-weight:700',
+        '｜数据 ' + DATA.items.length + ' 条｜当前时间 ' + d.toLocaleString('zh-CN') +
+        '｜登录账号 ' + (cur ? cur.username + '(' + cur.role + ')' : '未登录'));
+    }
+  }
+
+  /** 首次使用引导设置「我的情况」，用于资格判断 */
+  function maybeOnboard() {
+    if (store.isOnboarded()) return;
+    setTimeout(function () {
+      renderProfileSheet();
+      openSheet('profile');
+    }, 600);
   }
 
   global.ZHUKE = global.ZHUKE || {};
@@ -390,7 +538,10 @@
     $: $, $$: $$, esc: esc, toast: toast,
     openSheet: openSheet, closeSheets: closeSheets,
     trustBarHtml: trustBarHtml, cardHtml: cardHtml,
-    state: S, setView: setView
+    state: S, setView: setView,
+    openProfile: function () { renderProfileSheet(); openSheet('profile'); },
+    renderUserChip: renderUserChip,
+    startApp: startApp
   };
   global.ZHUKE.render = render;
   global.ZHUKE.boot = boot;

@@ -25,7 +25,7 @@
       .sort(function (a, b) { return a.st.nextAt - b.st.nextAt; });
 
     if (!soon.length) return '';
-    return '<div class="callout warn" style="margin-bottom:12px"><b>⏰ 你收藏的这些快到期了：</b><br>' +
+    return '<div class="callout warn" style="margin-bottom:12px"><b>⏰ 收藏的活动即将截止：</b><br>' +
       soon.map(function (x) {
         return '· ' + ui.esc(x.i.title) + ' —— ' + ui.esc(x.st.detail || '');
       }).join('<br>') + '</div>';
@@ -45,7 +45,7 @@
 
   function favList() {
     var ids = store.favorites();
-    if (!ids.length) return '<div class="empty"><span>⭐</span>还没收藏过。在发现页点卡片右上角的 ☆ 就能存下来。</div>';
+    if (!ids.length) return '<div class="empty"><span>⭐</span>暂无收藏记录。可在发现页点击卡片右上角的 ☆ 进行收藏。</div>';
     return '<div class="mini-list">' + ids.map(function (id) {
       var it = byId(id);
       if (!it) return '';
@@ -56,7 +56,7 @@
 
   function joinList() {
     var rows = store.joinedList();
-    if (!rows.length) return '<div class="empty"><span>📝</span>还没有报名记录。点开一个活动，在页面底下点「我要报名」就记上了。</div>';
+    if (!rows.length) return '<div class="empty"><span>📝</span>暂无报名记录。可在活动详情页点击「报名 / 登记意向」。</div>';
     return '<div class="mini-list">' + rows.map(function (r) {
       var it = byId(r.id);
       var title = it ? it.title : r.id;
@@ -67,12 +67,24 @@
   }
 
   function mineList() {
-    var posts = store.myPosts();
-    if (!posts.length) return '<div class="empty"><span>📣</span>还没发过东西。去「发布」页写一条，发完就出现在发现页。</div>';
+    var acc = global.ZHUKE.account.current();
+    var posts = store.myPosts().filter(function (p) { return acc && p.ownerId === acc.id; });
+    if (!posts.length) return '<div class="empty"><span>📣</span>暂无发布记录。可在「发布」页提交活动或招募信息。</div>';
     return '<div class="mini-list">' + posts.map(function (p) {
       var risk = p.risk ? ' · ' + p.risk.type : '';
-      return miniHtml('', p.title, '我发的｜' + (p.timeText || '时间待定') + risk, { del: p.id });
+      return miniHtml('', p.title, '我发布的｜' + (p.timeText || '时间待定') + risk, { del: p.id });
     }).join('') + '</div>';
+  }
+
+  function accountBlock() {
+    var acc = global.ZHUKE.account.current();
+    if (!acc) return '';
+    var A = global.ZHUKE.account;
+    return '<div class="callout info" style="margin-bottom:12px">' +
+      '<b>' + ui.esc(acc.realName) + '</b>（实名账号）· 学号 ' + ui.esc(A.maskStudentId(acc.studentId)) +
+      ' · ' + ui.esc((A.ROLES[acc.role] || A.ROLES.student).label) +
+      '<br><span style="opacity:.85">发布的内容会显示实名信息；账号由后台统一管理。</span>' +
+      '</div>';
   }
 
   function render() {
@@ -81,6 +93,8 @@
     var p = store.profile();
     var html = '';
 
+    html += accountBlock();
+
     html += '<div class="callout info" style="margin-bottom:12px">' +
       '<b>你的情况：</b>' + ui.esc(p.grade) + ' · ' + ui.esc(p.level) + ' · 每周可投入 ' + ui.esc(String(p.hours)) + ' 小时' +
       '<br><span style="opacity:.85">发现页那个「只看我符合条件的」，就是照这个筛的。<button class="link-btn" id="editProfile" type="button" style="color:inherit;text-decoration:underline">修改</button></span>' +
@@ -88,7 +102,9 @@
 
     html += countdownHtml();
 
-    var counts = { fav: store.favorites().length, join: store.joinedList().length, post: store.myPosts().length };
+    var acc = global.ZHUKE.account.current();
+    var myPostCount = acc ? store.myPosts().filter(function (x) { return x.ownerId === acc.id; }).length : 0;
+    var counts = { fav: store.favorites().length, join: store.joinedList().length, post: myPostCount };
     html += '<div class="seg">' +
       '<button data-tab="fav" class="' + (tab === 'fav' ? 'is-active' : '') + '">收藏 ' + counts.fav + '</button>' +
       '<button data-tab="join" class="' + (tab === 'join' ? 'is-active' : '') + '">我报名的 ' + counts.join + '</button>' +
@@ -110,7 +126,7 @@
       if (seg) { tab = seg.dataset.tab; render(); return; }
 
       if (ev.target.closest('#editProfile')) {
-        document.getElementById('profileBtn').click();
+        ui.openProfile();
         return;
       }
       var del = ev.target.closest('[data-del]');
@@ -118,11 +134,11 @@
         var id = del.dataset.del;
         if (tab === 'post') {
           store.removePost(id);
-          ui.toast('删掉了');
+          ui.toast('已删除该发布');
         } else {
           store.setJoin(id, null);
           store.toggleFavorite(id);
-          ui.toast('移掉了');
+          ui.toast('已移除');
         }
         render();
         global.ZHUKE.render();

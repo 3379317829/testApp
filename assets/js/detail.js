@@ -23,7 +23,7 @@
     var rows = (item.times || []).map(function (t) {
       var val;
       if (t.kind === 'unknown' || !t.at) {
-        val = '<span class="miss">' + ui.esc(t.text || '没写') + '</span>';
+        val = '<span class="miss">' + ui.esc(t.text || '未提供') + '</span>';
       } else {
         val = ui.esc(t.label + '：' + t.text);
         if (t.approximate) val += ' <span class="miss">（预计 / 待确认）</span>';
@@ -31,7 +31,7 @@
       }
       return '<div class="kv"><dt>' + (t.kind === 'deadline' ? '截止' : '时间') + '</dt><dd>' + val + '</dd></div>';
     }).join('');
-    return rows || '<div class="kv"><dt>时间</dt><dd class="miss">材料里没写时间</dd></div>';
+    return rows || '<div class="kv"><dt>时间</dt><dd class="miss">无</dd></div>';
   }
 
   function kv(label, value, isMissing) {
@@ -46,8 +46,8 @@
         '<del>' + ui.esc(c.from) + '</del><span>→</span><ins>' + ui.esc(c.to) + '</ins>' +
         '<span style="color:var(--muted)">（见 ' + ui.esc(c.updateId) + ' 号通知）</span></div>';
     }).join('');
-    return '<div class="block"><h3>🔄 有变更 <span class="hint">同一个活动前后发过两条通知，这里合起来看</span></h3>' +
-      '<div class="callout chg"><b>按最新的来，旧的已经作废了：</b>' + lines + '</div></div>';
+    return '<div class="block"><h3>🔄 信息变更 <span class="hint">该活动存在前后两条通知，以下为合并结果</span></h3>' +
+      '<div class="callout chg"><b>以最新通知为准，原信息已失效：</b>' + lines + '</div></div>';
   }
 
   function relatedHtml(relatedInfo) {
@@ -59,7 +59,7 @@
         '<div class="mini-sub">' + ui.esc(o.raw.slice(0, 42)) + '…</div></div>' +
         '<span style="color:var(--muted)">›</span></div>';
     }).join('');
-    return '<div class="block"><h3>🔗 相关的另一条通知 <span class="hint">点开看看</span></h3>' +
+    return '<div class="block"><h3>🔗 相关通知 <span class="hint">点击查看</span></h3>' +
       '<div class="mini-list">' + list + '</div></div>';
   }
 
@@ -94,20 +94,25 @@
     html += '<dl style="margin:0">';
     html += timesHtml(item);
     html += kv('地点', (item.place && item.place.status === 'known') ? item.place.text :
-      ((item.place && item.place.status === 'pending') ? item.place.text + '（待确认）' : '材料里没写'),
+      ((item.place && item.place.status === 'pending') ? item.place.text + '（待确认）' : '无'),
       !(item.place && item.place.status === 'known'));
-    html += kv('谁能参加', (item.audience && item.audience.text) || '没写', !(item.audience && item.audience.text && item.audience.text !== '没写'));
-    html += kv('有什么要求', item.requirement || '没写', !item.requirement);
-    html += kv('怎么报名', (item.signup && item.signup.text) || '没写', !(item.signup && item.signup.text));
-    html += kv('要不要花钱', (item.fee && item.fee.status === 'known') ? (item.fee.text || '材料里没提收不收费') : '材料里没写',
+    html += kv('面向对象', (item.audience && item.audience.text) || '无', !(item.audience && item.audience.text && item.audience.text !== '无'));
+    html += kv('参加要求', item.requirement || '无', !item.requirement);
+    html += kv('报名方式', (item.signup && item.signup.text) || '无', !(item.signup && item.signup.text));
+    html += kv('预估费用', (item.fee && item.fee.status === 'known') ? (item.fee.text || '无') : '无',
       !(item.fee && item.fee.status === 'known'));
-    html += kv('招多少人', (item.capacity && item.capacity.status === 'known') ? item.capacity.text : '材料里没写',
+    html += kv('招募人数', (item.capacity && item.capacity.status === 'known') ? item.capacity.text : '无',
       !(item.capacity && item.capacity.status === 'known'));
-    html += kv('谁发的', src.label + '：' + src.desc);
+    html += kv('发布方', src.label + '：' + src.desc);
+    if (it.authorLabel) {
+      var A = global.ZHUKE.account;
+      html += kv('发布账号', it.authorLabel + '（实名）' +
+        (it.authorStudentId ? ' · 学号 ' + A.maskStudentId(it.authorStudentId) : ''));
+    }
     html += '</dl>';
 
     /* 材料原文 —— 可追溯，不加工 */
-    html += '<div class="block"><h3>📄 材料原文 <span class="hint">材料里的原话，一个字没改</span></h3>' +
+    html += '<div class="block"><h3>📄 材料原文 <span class="hint">原文呈现，未作改写</span></h3>' +
       '<div class="callout muted">' + ui.esc(item.raw) + '</div></div>';
 
     /* 变更 */
@@ -115,7 +120,7 @@
 
     /* 缺失字段 */
     if (item.missing && item.missing.length) {
-      html += '<div class="block"><h3>⚠️ 材料里没写的 <span class="hint">这几项我不替你猜，要准的还是看官方通知</span></h3>' +
+      html += '<div class="block"><h3>⚠️ 未提供的信息 <span class="hint">材料中未注明，请以官方通知为准</span></h3>' +
         '<div class="callout warn">' +
         item.missing.map(function (m) { return '· ' + ui.esc(m); }).join('<br>') +
         '</div></div>';
@@ -124,14 +129,14 @@
     /* 风险提示 */
     if (item.risk) {
       html += '<div class="block"><h3>🚨 ' + ui.esc(item.risk.type) +
-        ' <span class="hint">留意一下</span></h3>' +
+        ' <span class="hint">风险提示</span></h3>' +
         '<div class="callout ' + (item.risk.level === 'high' ? 'danger' : 'warn') + '">' +
         '<b>' + ui.esc(item.risk.reason) + '</b></div></div>';
     }
 
     /* 待确认 */
     if (sc.pending.length) {
-      html += '<div class="block"><h3>⏳ 还没定下来的</h3><div class="callout muted">' +
+      html += '<div class="block"><h3>⏳ 待确认事项</h3><div class="callout muted">' +
         sc.pending.map(function (p) { return '· ' + ui.esc(p); }).join('<br>') + '</div></div>';
     }
 
@@ -139,7 +144,7 @@
     if (it.eligibility) {
       var eg = it.eligibility;
       var tone = eg.ok === 'yes' ? 'info' : (eg.ok === 'no' ? 'danger' : 'warn');
-      html += '<div class="block"><h3>🙋 我能参加吗？ <span class="hint">按你填的 ' + ui.esc(profile.grade) + ' / ' +
+      html += '<div class="block"><h3>🙋 参加资格 <span class="hint">判断依据 ' + ui.esc(profile.grade) + ' / ' +
         ui.esc(profile.level) + ' / 每周 ' + ui.esc(String(profile.hours)) + ' 小时判断</span></h3>' +
         '<div class="callout ' + tone + '"><b>' + ui.esc(eg.label) + '</b>' +
         (eg.reasons.length ? '<br>' + eg.reasons.map(function (r) { return '· ' + ui.esc(r); }).join('<br>') : '') +
@@ -147,10 +152,10 @@
     }
 
     /* 可信度（自主设计功能 A） */
-    html += '<div class="block"><h3>🔍 这条信息靠谱吗</h3>' +
+    html += '<div class="block"><h3>🔍 信息可信度</h3>' +
       ui.trustBarHtml(sc) +
-      (sc.lack.length ? '<div class="callout warn" style="margin-top:8px">缺了：' + ui.esc(sc.lack.join('、')) + '</div>' : '') +
-      '<div class="form-hint">学院和校级发的、写得越全，分就越高；要是带着广告味或者像兼职坑，往下扣。</div></div>';
+      (sc.lack.length ? '<div class="callout warn" style="margin-top:8px">缺失字段：' + ui.esc(sc.lack.join('、')) + '</div>' : '') +
+      '<div class="form-hint">评分依据：来源层级、字段完整度；存在可疑特征时相应扣分。</div></div>';
 
     html += relatedHtml(rel);
 
@@ -163,11 +168,11 @@
     } else {
       var needAudit = item.signup && item.signup.unsure;
       var closed = st.key === 'closed' || st.key === 'ended';
-      var label = closed ? '这个已经结束了' : (needAudit ? '我想去（要等对方确认）' : '我想去，记一下');
+      var label = closed ? '该活动已结束' : (needAudit ? '登记意向（待确认）' : '报名 / 登记意向');
       html += '<button class="btn primary" id="dJoin" type="button"' + (closed ? ' disabled style="opacity:.5"' : '') + '>' + label + '</button>';
     }
     html += '</div>';
-    html += '<div class="form-hint" style="margin-top:8px">点一下会记进「我的」；正式报名还得按上面的方式联系对方。</div>';
+    html += '<div class="form-hint" style="margin-top:8px">点击后记录至「我的」；实际报名请按上述方式联系发布方。</div>';
 
     var body = document.getElementById('sheetBody');
     body.innerHTML = html;
@@ -189,10 +194,10 @@
       joinBtn.addEventListener('click', function () {
         if (join === 'signed') {
           store.setJoin(id, null);
-          ui.toast('取消了');
+          ui.toast('已取消记录');
         } else {
           store.setJoin(id, 'signed');
-          ui.toast('记上了，在「我的」里能看到');
+          ui.toast('已记录至「我的」');
         }
         render(id);
         if (global.ZHUKE.mine) global.ZHUKE.mine.render();
