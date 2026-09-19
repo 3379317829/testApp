@@ -350,6 +350,17 @@ button { font: inherit; cursor: pointer; }
 .form-actions { display: flex; gap: 8px; margin-top: 6px; }
 
 /* ---------------- 我的 ---------------- */
+/* 相关服务入口 */
+.svc-card {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 14px; padding: 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface);
+}
+.svc-main { flex: 1; min-width: 0; }
+.svc-title { font-size: 13.5px; font-weight: 700; }
+.svc-desc { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.svc-go { flex: none; text-decoration: none; }
+
 .seg { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 .seg button {
   border: 1px solid var(--line); background: #fff; color: var(--ink-2);
@@ -391,6 +402,9 @@ button { font: inherit; cursor: pointer; }
 .foot { text-align: center; color: var(--muted); font-size: 11.5px; padding: 22px 0 8px; }
 .foot p { margin: 3px 0; }
 .foot-dim { opacity: .8; }
+.foot-svc { margin-top: 8px; }
+.foot-svc a { color: var(--brand); font-weight: 600; }
+.foot-svc a:hover { text-decoration: underline; }
 
 .toast {
   position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%);
