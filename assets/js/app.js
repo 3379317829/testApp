@@ -15,8 +15,13 @@
     now: Date.now(),
     view: 'discover',
     filters: { q: '', cat: '', src: '', quick: '', fit: false },
-    list: []
+    list: [],
+    page: 1,            /* 列表当前页码（从 1 开始） */
+    lastFilterKey: ''   /* 筛选条件指纹：变化时页码归位到第 1 页 */
   };
+
+  /** 列表每页条数 */
+  var PAGE_SIZE = 8;
 
   /* ---------------- DOM 小工具 ---------------- */
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -186,7 +191,7 @@
   }
 
   /* ---------------- 实名认证 ---------------- */
-  /** 未实名账号的实名认证页：提交真实姓名与学号 */
+  /** 未实名账号：向学校统一身份认证服务发起核验，自动获取实名信息并绑定 */
   function renderVerifySheet() {
     var acc = A.current();
     var body = $('#verifyBody');
@@ -201,42 +206,59 @@
 
     var html = '';
     html += '<h2 class="detail-title">实名认证</h2>';
-    html += '<p class="form-hint" style="margin-bottom:14px">' +
-      '完成实名认证后才能发布活动、报名或登记参加活动。认证信息仅用于平台身份核对，学号一人一号。</p>';
+    html += '<p class="form-hint" style="margin-bottom:12px">' +
+      '当前账号已通过学号登录。点击下方按钮向「我的珠科」发起身份核验，' +
+      '系统将自动获取姓名并完成绑定，无需手动填写。</p>';
 
-    html += '<div class="callout warn" style="margin-bottom:14px">' +
-      '请填写与学籍一致的姓名和学号。提交虚假信息将导致账号被封禁，并按平台规范处理。</div>';
+    html += '<div class="callout info" style="margin-bottom:14px">' +
+      '<b>关于本功能：</b>实名认证需调用学校统一身份认证服务（我的珠科APP），由服务端核验身份并返回实名信息。' +
+      '<br><span style="opacity:.85">当前版本尚未接入该服务，点击后由本地模拟返回结果，用于演示认证流程；' +
+      '接入后姓名与学号均以服务端返回为准。</span></div>';
 
-    html += '<div class="field-row"><label for="vfName">真实姓名 *</label>' +
-      '<input id="vfName" type="text" maxlength="10" placeholder="2—10 位中文姓名"></div>';
-    html += '<div class="field-row"><label for="vfSid">学号 *</label>' +
-      '<input id="vfSid" type="text" maxlength="14" value="' + esc(acc.studentId || '') + '" placeholder="6—14 位数字"></div>';
+    html += '<div class="kv"><dt>核验学号</dt><dd>' + esc(acc.studentId || '未提供') + '</dd></div>';
+    html += '<div class="kv"><dt>获取内容</dt><dd>真实姓名、学号</dd></div>';
+
     html += '<p class="login-err" id="vfErr" hidden></p>';
-    html += '<div class="form-actions">' +
-      '<button class="btn primary" id="vfSubmit" type="button">提交认证</button>' +
+    html += '<div class="form-actions" style="margin-top:14px">' +
+      '<button class="btn primary" id="vfSubmit" type="button">获取实名信息并绑定</button>' +
       '<button class="btn ghost" id="vfCancel" type="button">暂不认证</button></div>';
+    html += '<p class="agree-note">点击「获取实名信息并绑定」即表示你同意平台通过学校统一身份认证服务' +
+      '获取并使用你的姓名、学号信息，用于身份核验与内容归属标识。</p>';
 
     body.innerHTML = html;
 
-    $('#vfSubmit').addEventListener('click', function () {
-      var err = $('#vfErr');
-      var res = A.verify({
-        realName: $('#vfName').value,
-        studentId: $('#vfSid').value
-      });
-      if (!res.ok) {
-        err.innerHTML = res.errors.map(function (e) { return '· ' + esc(e); }).join('<br>');
-        err.hidden = false;
-        return;
-      }
+    var btn = $('#vfSubmit');
+    var err = $('#vfErr');
+
+    function fail(errors) {
+      btn.disabled = false;
+      btn.textContent = '获取实名信息并绑定';
+      err.innerHTML = errors.map(function (e) { return '· ' + esc(e); }).join('<br>');
+      err.hidden = false;
+    }
+
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      btn.textContent = '正在核验身份…';
       err.hidden = true;
-      closeSheets();
-      renderUserChip();
-      startApp();
-      if (global.ZHUKE.mine) global.ZHUKE.mine.render();
-      if (global.ZHUKE.admin) global.ZHUKE.admin.render();
-      toast('实名认证完成，现在可以发布和参加活动了');
+
+      /* 模拟一次网络往返；接入真实服务后此处改为请求统一身份认证接口 */
+      setTimeout(function () {
+        var auth = A.fetchIdentity();
+        if (!auth.ok) { fail(auth.errors); return; }
+
+        var res = A.verify({ realName: auth.data.name, studentId: auth.data.studentId });
+        if (!res.ok) { fail(res.errors); return; }
+
+        closeSheets();
+        renderUserChip();
+        startApp();
+        if (global.ZHUKE.mine) global.ZHUKE.mine.render();
+        if (global.ZHUKE.admin) global.ZHUKE.admin.render();
+        toast('已获取实名信息：' + auth.data.name);
+      }, 520);
     });
+
     $('#vfCancel').addEventListener('click', closeSheets);
   }
 
@@ -276,7 +298,7 @@
     $('#loginPass').value = '';
     hideLogin();
     startApp();
-    toast('欢迎回来，' + res.account.realName);
+    toast('欢迎回来，' + (res.account.realName || '同学'));
     return true;
   }
 
@@ -304,9 +326,9 @@
     $$('#loginView .demo-item').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var map = {
-          admin: { u: 'admin', p: 'admin123' },
-          student: { u: 'zhuke', p: '123456' },
-          newbie: { u: 'newbie', p: '123456' }
+          admin: { u: '00000000', p: 'admin123' },
+          student: { u: '20260101', p: '123456' },
+          newbie: { u: '20260315', p: '123456' }
         };
         var pick = map[btn.dataset.fill] || map.student;
         $('#loginUser').value = pick.u;
@@ -488,6 +510,10 @@
     '</article>';
   }
 
+  function filterKey() {
+    return [S.filters.q, S.filters.cat, S.filters.src, S.filters.quick, S.filters.fit ? 1 : 0].join('\u0001');
+  }
+
   function render() {
     var profile = store.profile();
     var filtered = E.filter(DATA.items, {
@@ -499,17 +525,61 @@
     });
     S.list = decorated;
 
+    /* 筛选条件变化时页码归位；结果变少时收敛到最后一页 */
+    var key = filterKey();
+    if (key !== S.lastFilterKey) { S.page = 1; S.lastFilterKey = key; }
+    var pages = Math.max(1, Math.ceil(decorated.length / PAGE_SIZE));
+    if (S.page > pages) S.page = pages;
+    if (S.page < 1) S.page = 1;
+
+    var start = (S.page - 1) * PAGE_SIZE;
+    var pageItems = decorated.slice(start, start + PAGE_SIZE);
+
     $('#resultCount').textContent = '共 ' + decorated.length + ' 条';
-    $('#list').innerHTML = decorated.length
-      ? decorated.map(cardHtml).join('')
+    $('#list').innerHTML = pageItems.length
+      ? pageItems.map(cardHtml).join('')
       : '<div class="empty"><span>🫥</span>没有符合条件的信息，请调整筛选条件或搜索关键词。</div>';
+
+    renderPager(decorated.length, pages, pageItems.length);
 
     var mineCount = store.favorites().length + store.joinedList().length + store.myPosts().length;
     $('#mineDot').classList.toggle('is-on', mineCount > 0);
   }
 
+  /** 分页栏：结果多于一页时出现 */
+  function renderPager(total, pages, shown) {
+    var pager = $('#pager');
+    if (!pager) return;
+    if (total <= PAGE_SIZE) { pager.hidden = true; pager.innerHTML = ''; return; }
+    pager.hidden = false;
+    pager.innerHTML =
+      '<button class="page-btn" data-page="prev" type="button"' + (S.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      '<span class="page-info">第 ' + S.page + ' / ' + pages + ' 页 · 本页 ' + shown + ' 条</span>' +
+      '<button class="page-btn" data-page="next" type="button"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button>';
+  }
+
+  /** 翻页：重绘后把列表顶部对齐到视口上方 */
+  function goPage(n) {
+    var pages = Math.max(1, Math.ceil(S.list.length / PAGE_SIZE));
+    var target = Math.min(Math.max(n, 1), pages);
+    if (target === S.page) return;
+    S.page = target;
+    render();
+    var list = $('#list');
+    if (list) {
+      var top = list.getBoundingClientRect().top + window.scrollY - 66;
+      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    }
+  }
+
   /* ---------------- 事件绑定 ---------------- */
   function bindEvents() {
+    $('#pager').addEventListener('click', function (ev) {
+      var b = ev.target.closest('button[data-page]');
+      if (!b || b.disabled) return;
+      goPage(b.dataset.page === 'next' ? S.page + 1 : S.page - 1);
+    });
+
     $('#quickbar').addEventListener('click', function (ev) {
       var b = ev.target.closest('button[data-q]');
       if (!b) return;
@@ -634,7 +704,9 @@
     openProfile: function () { renderProfileSheet(); openSheet('profile'); },
     openVerify: openVerify,
     renderUserChip: renderUserChip,
-    startApp: startApp
+    startApp: startApp,
+    /** 回到列表第 1 页（新增内容后调用） */
+    setPage: function (n) { S.page = n || 1; }
   };
   global.ZHUKE.render = render;
   global.ZHUKE.boot = boot;

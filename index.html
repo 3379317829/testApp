@@ -62,6 +62,8 @@
 
   <section id="list" class="list" aria-live="polite"></section>
 
+  <nav class="pager" id="pager" aria-label="分页" hidden></nav>
+
   <section id="minePanel" class="panel hidden">
     <h2 class="panel-title">我的收藏和报名</h2>
     <div id="mineBody"></div>
@@ -98,37 +100,40 @@
 
     <form id="loginForm" autocomplete="off">
       <div class="field-row">
-        <label for="loginUser">用户名</label>
-        <input id="loginUser" type="text" placeholder="请输入用户名" autocomplete="username">
+        <label for="loginUser">学号</label>
+        <input id="loginUser" type="text" placeholder="请输入学号" autocomplete="username">
       </div>
       <div class="field-row">
         <label for="loginPass">密码</label>
-        <input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password">
+        <input id="loginPass" type="password" placeholder="「我的珠科」APP 登录密码" autocomplete="current-password">
       </div>
       <p class="login-err" id="loginErr" hidden></p>
       <button class="btn primary" id="loginSubmit" type="submit">登录</button>
+      <p class="login-agree">
+        登录即表示你已同意平台使用你的学号、姓名等信息，用于身份核验与内容归属标识。
+      </p>
     </form>
 
     <div class="login-demo">
       <div class="login-demo-title">演示账号（点击自动填入）</div>
       <button type="button" class="demo-item" data-fill="admin">
         <b>管理员</b>
-        <span>admin / admin123</span>
+        <span>00000000 / admin123</span>
         <em>登录后可进入后台</em>
       </button>
       <button type="button" class="demo-item" data-fill="student">
-        <b>学生</b>
-        <span>zhuke / 123456</span>
-        <em>林晓 · 学号 20260101 · 已实名</em>
+        <b>学生·已实名</b>
+        <span>20260101 / 123456</span>
+        <em>林晓 · 已绑定学号</em>
       </button>
       <button type="button" class="demo-item" data-fill="newbie">
         <b>未实名</b>
-        <span>newbie / 123456</span>
+        <span>20260315 / 123456</span>
         <em>未完成实名认证 · 不能发布或参加活动</em>
       </button>
       <p class="login-note">
-        本功能为本地演示：账号绑定学号并需完成实名认证，账号数据仅用于展示登录、实名认证、实名发布与后台管理流程，
-        不做真实身份校验，也不与学校系统对接。
+        登录使用学号与「我的珠科」APP 的密码，由学校统一身份认证服务核验。当前版本尚未接入该服务，
+        账号数据仅用于演示登录、实名认证、实名发布与后台管理流程，不做真实身份校验。
       </p>
     </div>
   </div>

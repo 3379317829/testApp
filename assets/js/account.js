@@ -47,6 +47,15 @@
     }
   ];
 
+  /* 模拟服务端返回的实名信息来源：真实接入后由学校统一身份认证服务返回。
+     这里覆盖内置演示账号；其余学号从姓名池中按学号确定性地取一个，保证结果稳定。 */
+  var MOCK_IDENTITY = {
+    '00000000': '系统管理员',
+    '20260101': '林晓',
+    '20260315': '周雨桐'
+  };
+  var MOCK_NAME_POOL = ['林晓', '陈志远', '周雨桐', '黄嘉禾', '苏子墨', '郑一诺', '何思远', '罗嘉言'];
+
   var SEED_POSTS = [
     {
       id: 'seed-post-1', ownerId: 'acc-demo', mine: true,
@@ -135,6 +144,16 @@
     return rawAccounts().filter(function (a) { return a.username.toLowerCase() === u; })[0] || null;
   }
 
+  /** 登录标识：优先按学号匹配，未绑定学号的账号回退到账号名 */
+  function byLogin(name) {
+    var key = String(name || '').trim();
+    if (!key) return null;
+    var list = rawAccounts();
+    var hit = list.filter(function (a) { return a.studentId && a.studentId === key; })[0];
+    if (hit) return hit;
+    return list.filter(function (a) { return a.username.toLowerCase() === key.toLowerCase(); })[0] || null;
+  }
+
   function postCount(accountId) {
     return (store.all().mine || []).filter(function (p) { return p.ownerId === accountId; }).length;
   }
@@ -178,10 +197,10 @@
     },
 
     /** 登录：校验用户名、密码与状态 */
-    login: function (username, password) {
-      var acc = byUsername(username);
-      if (!acc) return { ok: false, message: '账号不存在，请核对用户名' };
-      if (acc.password !== String(password)) return { ok: false, message: '密码不正确' };
+    login: function (account, password) {
+      var acc = byLogin(account);
+      if (!acc) return { ok: false, message: '该学号未注册，请核对后重试' };
+      if (acc.password !== String(password)) return { ok: false, message: '密码不正确，请使用「我的珠科」APP 的密码' };
       if (acc.status === 'banned') return { ok: false, message: '该账号已被封禁，无法登录' };
       var s = store.all();
       s.session = { accountId: acc.id, at: new Date().toISOString() };
@@ -240,6 +259,37 @@
       cur.verifiedAt = new Date().toISOString();
       store.save();
       return { ok: true, account: cur };
+    },
+
+    /* ---------- 学校统一身份认证：获取实名信息（当前为本地模拟，保留服务端接口形态） ----------
+     * 登录环节已使用学号 +「我的珠科」APP 密码完成，本接口只负责换取实名信息。
+     * 正式接入时前端只做一件事：
+     *   POST {AUTH_ENDPOINT}/identity  { studentId, password }
+     * 由服务端向学校统一身份认证服务核验，返回：
+     *   成功 { ok: true, name, studentId }   失败 { ok: false, message }
+     * 密码只过一次网络，不在前端留存、不写入本地存储；姓名等实名信息一律以服务端返回为准。
+     * 当前版本未接入该服务，以下用本地规则模拟服务端返回结果。
+     * ----------------------------------------------------------------------------------- */
+    fetchIdentity: function () {
+      var cur = account.current();
+      if (!cur) return { ok: false, errors: ['登录状态已失效，请重新登录'] };
+
+      var studentId = String(cur.studentId || '').trim();
+      if (!/^\d{6,14}$/.test(studentId)) {
+        return { ok: false, errors: ['当前账号未绑定有效学号，无法发起身份核验'] };
+      }
+
+      var dup = rawAccounts().filter(function (a) {
+        return a.studentId === studentId && a.id !== cur.id;
+      })[0];
+      if (dup) return { ok: false, errors: ['该学号已被其他账号绑定（实名制下一人一号）'] };
+
+      /* ↓↓↓ 模拟服务端返回，接入学校统一身份认证后整段删除 ↓↓↓ */
+      var sum = studentId.split('').reduce(function (s, c) { return s + (Number(c) || 0); }, 0);
+      var name = MOCK_IDENTITY[studentId] || MOCK_NAME_POOL[sum % MOCK_NAME_POOL.length];
+      /* ↑↑↑ 模拟结束 ↑↑↑ */
+
+      return { ok: true, source: 'mock', data: { studentId: studentId, name: name } };
     },
 
     /** 新增账号（仅管理员可用，界面侧限制入口） */

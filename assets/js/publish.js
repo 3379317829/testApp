@@ -84,8 +84,8 @@
 
     return '' +
       '<p class="form-hint" style="margin-bottom:12px">' +
-      '自己攒的局、组队、约球、找搭子，都能发在这儿。发完就出现在发现页，别人看得到。' +
-      '内容里要是出现"日结""加微信"这类字眼，会挂个提醒，但真假还得自己留神。</p>' +
+      '可发布同学自发的活动、组队与招募信息，发布后即进入发现页展示。' +
+      '系统会对含「日结」「加微信」等特征字眼的内容附加风险提示，但不对信息真实性作担保，请自行核实。</p>' +
 
       '<div class="callout danger" style="margin-bottom:14px">' +
       '<b>发布提醒（实名制）：</b>本平台账号已绑定学号并完成实名登记，' +
@@ -178,9 +178,9 @@
     if (A.current() && !A.isVerified()) {
       body.innerHTML =
         '<div class="callout warn" style="margin-bottom:14px">' +
-        '<b>当前账号未实名，暂不能发布内容。</b>' +
-        '平台要求发布活动与招募信息前需完成实名认证（绑定真实姓名与学号），' +
-        '以保证信息来源可追溯。完成认证后即可发布。</div>' +
+        '<b>当前账号未完成实名认证，暂不能发布内容。</b>' +
+        '发布活动与招募信息前需通过学校统一身份认证完成实名核验（使用学号与「我的珠科」APP 密码），' +
+        '以保证信息来源可追溯。认证通过后即可发布。</div>' +
         '<div class="form-actions"><button class="btn primary" id="goVerify" type="button">去实名认证</button></div>';
       var go = document.getElementById('goVerify');
       if (go) go.addEventListener('click', function () { ui.openVerify(); });
@@ -263,6 +263,7 @@
     var post = store.addPost(f);
     DATA.items.unshift(toItem(post));       /* 进入正常使用流程：发现页立即可见 */
 
+    ui.setPage(1);                          /* 新内容在列表首屏，回到第 1 页 */
     global.ZHUKE.render();
     if (global.ZHUKE.mine) global.ZHUKE.mine.render();
     if (global.ZHUKE.admin) global.ZHUKE.admin.render();
