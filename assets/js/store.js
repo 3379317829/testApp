@@ -11,13 +11,15 @@
   var DEFAULT_STATE = {
     favorites: [],   // [id]
     joined: {},      // { id: 'signed' | 'waitlist' | 'reviewing' }
-    mine: [],        // [自建活动对象]
+    mine: [],        // [自建活动对象，含 ownerId 归属账号]
     profile: {
       grade: '大一',
       level: '零基础',
       hours: 4
     },
-    onboarded: false
+    onboarded: false,
+    accounts: [],               // 账号列表（学号绑定 + 实名制），首次使用由 account.js 写入种子账号
+    session: { accountId: null } // 当前登录账号
   };
 
   function clone(o) {
