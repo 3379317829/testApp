@@ -251,13 +251,15 @@ button { font: inherit; cursor: pointer; }
 .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 14px; }
 .empty span { display: block; font-size: 30px; margin-bottom: 8px; }
 
-/* ---------------- 弹层 ---------------- */
+/* ---------------- 弹层 ----------------
+ * 层级：遮罩 95 < 弹层 100 < 轻提示 130，都高于登录页（90），
+ * 否则从登录页打开的弹层会被整页登录视图盖住（DOM 打开了但看不见）。 */
 .sheet-mask {
-  position: fixed; inset: 0; background: rgba(20, 23, 26, .42); z-index: 40;
+  position: fixed; inset: 0; background: rgba(20, 23, 26, .42); z-index: 95;
   animation: fade .18s ease;
 }
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
   max-width: var(--max); margin: 0 auto;
   background: var(--surface); border-radius: 20px 20px 0 0;
   box-shadow: var(--shadow-lg); max-height: 86vh; display: flex; flex-direction: column;
@@ -393,7 +395,7 @@ button { font: inherit; cursor: pointer; }
 .toast {
   position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%);
   background: rgba(20, 23, 26, .9); color: #fff; font-size: 13px;
-  padding: 9px 16px; border-radius: 999px; z-index: 60; animation: fade .16s ease;
+  padding: 9px 16px; border-radius: 999px; z-index: 130; animation: fade .16s ease;
   max-width: 84vw; text-align: center;
 }
 

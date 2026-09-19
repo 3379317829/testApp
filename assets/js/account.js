@@ -199,10 +199,14 @@
     /** 登录：校验用户名、密码与状态 */
     login: function (account, password) {
       var acc = byLogin(account);
-      /* 账号不存在与密码错误给同一提示，避免暴露学号是否已注册 */
-      if (!acc) return { ok: false, message: '账号或密码错误' };
-      if (acc.password !== String(password)) return { ok: false, message: '账号或密码错误' };
+      /* 学号尚未开通账号：带上 notRegistered，由登录页引导去身份核验开通 */
+      if (!acc) {
+        return { ok: false, message: '该学号尚未开通账号，正在发起身份核验', notRegistered: true };
+      }
       if (acc.status === 'banned') return { ok: false, message: '该账号已被封禁，无法登录' };
+      /* 演示环境不校验密码：密码由「我的珠科」统一身份认证负责，
+         接入后应改为把 credentials 交给服务端核验，前端不比对、不落库。
+         形参 password 保留，用于将来透传给认证服务。 */
       var s = store.all();
       s.session = { accountId: acc.id, at: new Date().toISOString() };
       store.save();

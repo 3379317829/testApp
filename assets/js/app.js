@@ -322,12 +322,16 @@
     $('#loginView').hidden = true;
   }
 
-  function doLogin(username, password) {
-    var res = A.login(username, password);
+  function doLogin(account, password) {
+    var res = A.login(account, password);
     var err = $('#loginErr');
     if (!res.ok) {
       err.textContent = res.message;
       err.hidden = false;
+      /* 学号尚未开通账号：直接进入身份核验，核验通过后自动开通并登录 */
+      if (res.notRegistered) {
+        openVerifyForSignup(String(account || '').trim(), password);
+      }
       return false;
     }
     err.hidden = true;
