@@ -105,8 +105,9 @@
     var el = $('#userLabel');
     if (!el) return;
     if (!acc) { el.textContent = '未登录'; return; }
-    el.textContent = acc.realName + ' · ' + A.maskStudentId(acc.studentId) +
-      (acc.role === 'admin' ? ' · 管理员' : '');
+    el.textContent = acc.role === 'admin'
+      ? (acc.realName + ' · 管理员')
+      : (acc.realName + ' · ' + A.maskStudentId(acc.studentId));
   }
 
   /** 账号弹层：身份信息、去后台、退出登录 */
