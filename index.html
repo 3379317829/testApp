@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>掌上猪科 · 校园活动与机会</title>
+<meta name="description" content="掌上猪科 —— 把校园活动与机会整理成「今天能做什么、我够不够格、什么时候截止、信息靠不靠谱」。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐷</text></svg>">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-logo" aria-hidden="true">🐷</span>
+      <span class="brand-text">
+        <strong>掌上猪科</strong>
+        <small>校园活动与机会 · 一眼看懂能不能参加</small>
+      </span>
+    </div>
+    <button class="profile-btn" id="profileBtn" type="button" title="设置我的情况">
+      <span id="profileSummary">大一 · 零基础</span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="notice" id="dataNotice">
+    <strong>时间背景</strong>：以考核当日 <time id="nowLabel">2026-09-19</time> 为基准实时计算活动状态。
+    <span class="notice-dim">数据来自考核题目所给模拟材料，不代表学校真实通知。</span>
+  </section>
+
+  <section class="stats" id="stats" aria-label="今日概览"></section>
+
+  <section class="panel" aria-label="筛选">
+    <div class="quickbar" id="quickbar"></div>
+    <div class="filterbar">
+      <label class="search">
+        <span aria-hidden="true">🔍</span>
+        <input id="q" type="search" placeholder="搜索活动、招募、技能关键词（如 Git、志愿、零基础）" autocomplete="off">
+      </label>
+      <div class="selects">
+        <select id="cat" aria-label="分类">
+          <option value="">全部分类</option>
+        </select>
+        <select id="src" aria-label="来源">
+          <option value="">全部来源</option>
+        </select>
+      </div>
+    </div>
+    <div class="filterbar-foot">
+      <span id="resultCount" class="count">共 26 条</span>
+      <label class="switch">
+        <input type="checkbox" id="fitOnly">
+        <span>只看我符合条件的</span>
+      </label>
+      <button class="link-btn" id="resetFilter" type="button">重置</button>
+    </div>
+  </section>
+
+  <section id="list" class="list" aria-live="polite"></section>
+
+  <section id="minePanel" class="panel hidden">
+    <h2 class="panel-title">我的</h2>
+    <div id="mineBody"></div>
+  </section>
+
+  <section id="publishPanel" class="panel hidden">
+    <h2 class="panel-title">我要发布</h2>
+    <div id="publishBody"></div>
+  </section>
+
+  <footer class="foot">
+    <p>掌上猪科 · 珠海科技学院计算机协会软件部 2026 秋季纳新第二轮考核作品</p>
+    <p class="foot-dim">纯静态前端 · 数据本地保存 · 材料为模拟信息</p>
+  </footer>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab is-active" data-view="discover" type="button"><span aria-hidden="true">🧭</span>发现</button>
+  <button class="tab" data-view="publish" type="button"><span aria-hidden="true">📣</span>发布</button>
+  <button class="tab" data-view="mine" type="button"><span aria-hidden="true">⭐</span>我的<span class="badge-dot" id="mineDot"></span></button>
+</nav>
+
+<!-- 详情弹层 -->
+<div class="sheet-mask" id="sheetMask" hidden></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="活动详情" hidden>
+  <div class="sheet-head">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <button class="sheet-close" id="sheetClose" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</aside>
+
+<!-- 个人信息弹层 -->
+<aside class="sheet" id="profileSheet" role="dialog" aria-modal="true" aria-label="我的情况" hidden>
+  <div class="sheet-head">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <button class="sheet-close" id="profileClose" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="sheet-body" id="profileBody"></div>
+</aside>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/engine.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/detail.js"></script>
+<script src="assets/js/mine.js"></script>
+<script src="assets/js/publish.js"></script>
+<script>ZHUKE.boot();</script>
+</body>
+</html>
