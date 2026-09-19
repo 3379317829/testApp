@@ -118,9 +118,11 @@
       '<div class="field-row"><label>报名方式 / 联系方式</label>' +
       '<input id="pSignup" type="text" maxlength="40" placeholder="例：进群填表 / 评论区留言"></div>' +
 
-      '<div class="field-row" style="margin-bottom:8px">' +
-      '<label class="switch" style="font-size:12.5px;color:var(--ink-2);display:flex;gap:6px">' +
-      '<input type="checkbox" id="pAgree"> 我已阅读并知悉上述提醒，承诺发布内容真实、合规</label></div>' +
+      '<label class="agree-row" id="pAgreeRow">' +
+      '<input type="checkbox" id="pAgree">' +
+      '<span class="agree-text">我已阅读并知悉上述提醒，承诺发布内容真实、合规，' +
+      '并对发布内容负责。未实名账号需先完成实名认证才能发布。</span>' +
+      '</label>' +
 
       '<div class="form-actions">' +
       '<button class="btn primary" id="pSubmit" type="button" disabled style="opacity:.55">发布</button>' +
@@ -170,6 +172,21 @@
   function render() {
     var body = document.getElementById('publishBody');
     if (!body) return;
+    var A = global.ZHUKE.account;
+
+    /* 未实名账号：不展示发布表单，改为实名认证引导 */
+    if (A.current() && !A.isVerified()) {
+      body.innerHTML =
+        '<div class="callout warn" style="margin-bottom:14px">' +
+        '<b>当前账号未实名，暂不能发布内容。</b>' +
+        '平台要求发布活动与招募信息前需完成实名认证（绑定真实姓名与学号），' +
+        '以保证信息来源可追溯。完成认证后即可发布。</div>' +
+        '<div class="form-actions"><button class="btn primary" id="goVerify" type="button">去实名认证</button></div>';
+      var go = document.getElementById('goVerify');
+      if (go) go.addEventListener('click', function () { ui.openVerify(); });
+      return;
+    }
+
     body.innerHTML = formHtml();
     bindForm();
   }
@@ -225,6 +242,11 @@
   function submit() {
     var acc = global.ZHUKE.account.current();
     if (!acc) { ui.toast('请先登录后再发布'); return; }
+    if (!global.ZHUKE.account.isVerified()) {
+      ui.toast('未实名账号不能发布，请先完成实名认证');
+      ui.openVerify();
+      return;
+    }
     var agree = document.getElementById('pAgree');
     if (!agree || !agree.checked) { ui.toast('请先勾选实名发布承诺'); return; }
 

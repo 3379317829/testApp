@@ -41,10 +41,10 @@
   var closeTimer = null;
 
   function openSheet(which) {
-    var map = { detail: '#sheet', profile: '#profileSheet', account: '#accountSheet' };
+    var map = { detail: '#sheet', profile: '#profileSheet', account: '#accountSheet', verify: '#verifySheet' };
     var sheet = $(map[which] || '#sheet');
     if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
-    ['#sheet', '#profileSheet', '#accountSheet'].forEach(function (sel) {
+    ['#sheet', '#profileSheet', '#accountSheet', '#verifySheet'].forEach(function (sel) {
       var el = $(sel);
       el.classList.remove('is-closing');
       if (el !== sheet) el.hidden = true;
@@ -56,7 +56,7 @@
 
   /** 关闭弹层：先播放收起动画，再真正移除；遮罩与滚动锁同步复位 */
   function closeSheets() {
-    var open = ['#sheet', '#profileSheet', '#accountSheet'].map(function (sel) { return $(sel); })
+    var open = ['#sheet', '#profileSheet', '#accountSheet', '#verifySheet'].map(function (sel) { return $(sel); })
       .filter(function (el) { return el && !el.hidden; });
     $('#sheetMask').hidden = true;
     document.body.classList.remove('no-scroll');
@@ -99,24 +99,27 @@
   var LEVELS = ['零基础', '有基础'];
   var HOURS = [2, 4, 6, 8, 10];
 
-  /** 顶栏右侧显示当前账号（实名 + 学号后四位） */
+  /** 顶栏右侧显示当前账号：已实名显示姓名与学号，未实名显示待认证 */
   function renderUserChip() {
     var acc = A.current();
     var el = $('#userLabel');
     if (!el) return;
     if (!acc) { el.textContent = '未登录'; return; }
+    if (!A.isVerified()) { el.textContent = '未实名 · 待认证'; return; }
     el.textContent = acc.role === 'admin'
       ? (acc.realName + ' · 管理员')
       : (acc.realName + ' · ' + A.maskStudentId(acc.studentId));
   }
 
-  /** 账号弹层：身份信息、去后台、退出登录 */
+  /** 账号弹层：身份信息、实名状态、去后台、退出登录 */
   function renderAccountSheet() {
     var acc = A.current();
     var body = $('#accountBody');
     if (!acc) return;
     var role = A.ROLES[acc.role] || A.ROLES.student;
     var status = A.STATUS[acc.status] || A.STATUS.active;
+    var verify = A.verifyStatusOf(acc);
+    var verified = A.isVerified();
     var myPosts = A.postsOf(acc.id).length;
     var p = store.profile();
 
@@ -125,19 +128,26 @@
     html += '<div class="detail-badges">' +
       '<span class="badge src lv' + (acc.role === 'admin' ? 3 : 1) + '">' + esc(role.label) + '</span>' +
       '<span class="badge t-' + status.tone + '">' + esc(status.label) + '</span>' +
-      '<span class="badge t-muted">实名制</span>' +
+      '<span class="badge t-' + verify.tone + '">' + esc(verify.label) + '</span>' +
       '</div>';
 
     html += '<dl style="margin:12px 0 0">' +
-      kvRow('姓名', acc.realName + '（实名）') +
-      kvRow('学号', acc.studentId) +
+      kvRow('姓名', verified ? (acc.realName + '（已实名）') : '未实名') +
+      kvRow('学号', verified ? acc.studentId : (acc.studentId ? A.maskStudentId(acc.studentId) + '（待认证）' : '未绑定')) +
       kvRow('用户名', acc.username) +
+      kvRow('实名状态', verify.label) +
       kvRow('我发布的', myPosts + ' 条') +
       kvRow('我的情况', p.grade + ' · ' + p.level + ' · 每周 ' + p.hours + ' 小时') +
       '</dl>';
 
-    html += '<div class="callout info" style="margin-top:12px">账号已绑定学号并完成实名登记，' +
-      '发布的内容会显示发布者实名信息，便于同学判断信息来源。</div>';
+    if (verified) {
+      html += '<div class="callout info" style="margin-top:12px">账号已完成实名认证，' +
+        '发布的内容会显示发布者实名信息，便于同学判断信息来源。</div>';
+    } else {
+      html += '<div class="callout warn" style="margin-top:12px">' +
+        '<b>该账号尚未完成实名认证。</b>未实名账号不能发布活动，也不能报名或登记参加活动。' +
+        '请先提交真实姓名与学号完成认证。</div>';
+    }
 
     if (acc.status === 'banned') {
       html += '<div class="callout danger" style="margin-top:10px">该账号已被封禁：' +
@@ -145,6 +155,7 @@
     }
 
     html += '<div class="actions">' +
+      (verified ? '' : '<button class="btn primary" id="acctVerify" type="button">去实名认证</button>') +
       '<button class="btn ghost" id="acctProfile" type="button">修改我的情况</button>' +
       (acc.role === 'admin' ? '<button class="btn primary" id="acctAdmin" type="button">进入后台</button>' : '') +
       '<button class="btn" id="acctLogout" type="button">退出登录</button>' +
@@ -152,6 +163,8 @@
 
     body.innerHTML = html;
 
+    var verifyBtn = $('#acctVerify');
+    if (verifyBtn) verifyBtn.addEventListener('click', openVerify);
     $('#acctProfile').addEventListener('click', function () {
       renderProfileSheet();
       openSheet('profile');
@@ -170,6 +183,66 @@
       showLogin();
       toast('已退出登录');
     });
+  }
+
+  /* ---------------- 实名认证 ---------------- */
+  /** 未实名账号的实名认证页：提交真实姓名与学号 */
+  function renderVerifySheet() {
+    var acc = A.current();
+    var body = $('#verifyBody');
+    if (!acc) return;
+
+    if (A.isVerified()) {
+      body.innerHTML = '<h2 class="detail-title">实名认证</h2>' +
+        '<div class="callout info" style="margin-top:12px">该账号已完成实名认证：' +
+        esc(acc.realName) + ' · 学号 ' + esc(acc.studentId) + '</div>';
+      return;
+    }
+
+    var html = '';
+    html += '<h2 class="detail-title">实名认证</h2>';
+    html += '<p class="form-hint" style="margin-bottom:14px">' +
+      '完成实名认证后才能发布活动、报名或登记参加活动。认证信息仅用于平台身份核对，学号一人一号。</p>';
+
+    html += '<div class="callout warn" style="margin-bottom:14px">' +
+      '请填写与学籍一致的姓名和学号。提交虚假信息将导致账号被封禁，并按平台规范处理。</div>';
+
+    html += '<div class="field-row"><label for="vfName">真实姓名 *</label>' +
+      '<input id="vfName" type="text" maxlength="10" placeholder="2—10 位中文姓名"></div>';
+    html += '<div class="field-row"><label for="vfSid">学号 *</label>' +
+      '<input id="vfSid" type="text" maxlength="14" value="' + esc(acc.studentId || '') + '" placeholder="6—14 位数字"></div>';
+    html += '<p class="login-err" id="vfErr" hidden></p>';
+    html += '<div class="form-actions">' +
+      '<button class="btn primary" id="vfSubmit" type="button">提交认证</button>' +
+      '<button class="btn ghost" id="vfCancel" type="button">暂不认证</button></div>';
+
+    body.innerHTML = html;
+
+    $('#vfSubmit').addEventListener('click', function () {
+      var err = $('#vfErr');
+      var res = A.verify({
+        realName: $('#vfName').value,
+        studentId: $('#vfSid').value
+      });
+      if (!res.ok) {
+        err.innerHTML = res.errors.map(function (e) { return '· ' + esc(e); }).join('<br>');
+        err.hidden = false;
+        return;
+      }
+      err.hidden = true;
+      closeSheets();
+      renderUserChip();
+      startApp();
+      if (global.ZHUKE.mine) global.ZHUKE.mine.render();
+      if (global.ZHUKE.admin) global.ZHUKE.admin.render();
+      toast('实名认证完成，现在可以发布和参加活动了');
+    });
+    $('#vfCancel').addEventListener('click', closeSheets);
+  }
+
+  function openVerify() {
+    renderVerifySheet();
+    openSheet('verify');
   }
 
   function kvRow(label, value) {
@@ -230,9 +303,14 @@
 
     $$('#loginView .demo-item').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var isAdmin = btn.dataset.fill === 'admin';
-        $('#loginUser').value = isAdmin ? 'admin' : 'zhuke';
-        $('#loginPass').value = isAdmin ? 'admin123' : '123456';
+        var map = {
+          admin: { u: 'admin', p: 'admin123' },
+          student: { u: 'zhuke', p: '123456' },
+          newbie: { u: 'newbie', p: '123456' }
+        };
+        var pick = map[btn.dataset.fill] || map.student;
+        $('#loginUser').value = pick.u;
+        $('#loginPass').value = pick.p;
         $('#loginErr').hidden = true;
         $('#loginSubmit').focus();
       });
@@ -485,6 +563,7 @@
     });
     $('#profileClose').addEventListener('click', closeSheets);
     $('#accountClose').addEventListener('click', closeSheets);
+    $('#verifyClose').addEventListener('click', closeSheets);
     $('#sheetClose').addEventListener('click', closeSheets);
     $('#sheetMask').addEventListener('click', closeSheets);
     document.addEventListener('keydown', function (ev) {
@@ -541,6 +620,7 @@
     trustBarHtml: trustBarHtml, cardHtml: cardHtml,
     state: S, setView: setView,
     openProfile: function () { renderProfileSheet(); openSheet('profile'); },
+    openVerify: openVerify,
     renderUserChip: renderUserChip,
     startApp: startApp
   };

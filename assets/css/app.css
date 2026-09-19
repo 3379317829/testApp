@@ -144,6 +144,21 @@ button { font: inherit; cursor: pointer; }
 .link-btn { border: 0; background: none; color: var(--brand); font-size: 12.5px; padding: 0; }
 .link-btn:hover { text-decoration: underline; }
 
+/* 同意 / 承诺勾选行（与筛选栏的 .switch 分开，避免被 margin-left:auto 挤到右侧） */
+.agree-row {
+  display: flex; align-items: flex-start; gap: 9px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: #fafbfc; padding: 11px 12px; margin-bottom: 12px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.agree-row:hover { border-color: #d7dbe2; }
+.agree-row.is-on { border-color: var(--brand); background: var(--brand-soft); }
+.agree-row input {
+  flex: none; width: 17px; height: 17px; margin: 1px 0 0;
+  accent-color: var(--brand); cursor: pointer;
+}
+.agree-row .agree-text { font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+
 /* ---------------- 列表卡片 ---------------- */
 .list { display: flex; flex-direction: column; gap: 10px; }
 .card {
@@ -379,6 +394,11 @@ body.login-mode .tabbar { display: none; }
 .demo-item b { font-size: 13px; color: var(--brand); flex: none; }
 .demo-item span { font-size: 13px; color: var(--ink); font-family: ui-monospace, Consolas, monospace; }
 .demo-item em { margin-left: auto; font-size: 11.5px; color: var(--muted); font-style: normal; flex: none; }
+/* 窄屏下把说明文字换到第二行，避免把账号密码挤成两行 */
+@media (max-width: 430px) {
+  .demo-item { flex-wrap: wrap; row-gap: 2px; }
+  .demo-item em { flex: 1 1 100%; margin-left: 0; }
+}
 .login-note { font-size: 11.5px; color: var(--muted); line-height: 1.75; margin: 10px 0 0; }
 
 /* ============================================================

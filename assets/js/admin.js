@@ -44,7 +44,8 @@
     return '' +
       '<div class="admin-block">' +
       '<h3 class="admin-h3">新增账号</h3>' +
-      '<p class="form-hint" style="margin-bottom:10px">账号绑定学号并采用实名制：同一学号只能注册一个账号，姓名需与学籍一致。</p>' +
+      '<p class="form-hint" style="margin-bottom:10px">账号绑定学号并采用实名制：同一学号只能注册一个账号，姓名需与学籍一致。' +
+      '通过后台新增的账号视为已录入实名信息，状态为「已实名」。</p>' +
       '<div class="admin-form">' +
       '<div class="field-row"><label>用户名 *</label><input id="nuUser" type="text" maxlength="16" placeholder="3—16 位字母、数字或下划线"></div>' +
       '<div class="field-row"><label>初始密码 *</label><input id="nuPass" type="text" maxlength="20" placeholder="至少 6 位"></div>' +
@@ -75,14 +76,16 @@
     html += '<div class="acct' + (acc.status === 'banned' ? ' is-banned' : '') + '">';
     html += '<div class="acct-head">';
     html += '<div class="acct-main">';
-    html += '<div class="acct-name">' + ui.esc(acc.realName) +
+    html += '<div class="acct-name">' + ui.esc(acc.realName || '未实名账号') +
       (isMe ? '<span class="acct-me">当前登录</span>' : '') + '</div>';
     html += '<div class="acct-sub">@' + ui.esc(acc.username) +
       ' · 学号 ' + ui.esc(acc.studentId) +
       ' · ' + posts.length + ' 条发布</div>';
+    var verify = A.verifyStatusOf(acc);
     html += '<div class="acct-badges">' +
       badge(role.label, acc.role === 'admin' ? 'open' : 'muted') +
       badge(status.label, status.tone) +
+      badge(verify.label, verify.tone) +
       (acc.banReason ? badge(acc.banReason, 'warn') : '') +
       '</div>';
     html += '</div>';

@@ -77,13 +77,24 @@
   }
 
   function accountBlock() {
-    var acc = global.ZHUKE.account.current();
-    if (!acc) return '';
     var A = global.ZHUKE.account;
-    return '<div class="callout info" style="margin-bottom:12px">' +
-      '<b>' + ui.esc(acc.realName) + '</b>（实名账号）· 学号 ' + ui.esc(A.maskStudentId(acc.studentId)) +
-      ' · ' + ui.esc((A.ROLES[acc.role] || A.ROLES.student).label) +
-      '<br><span style="opacity:.85">发布的内容会显示实名信息；账号由后台统一管理。</span>' +
+    var acc = A.current();
+    if (!acc) return '';
+    var verify = A.verifyStatusOf(acc);
+    var verified = A.isVerified();
+    var idText = acc.studentId ? A.maskStudentId(acc.studentId) : '未绑定';
+
+    return '<div class="callout ' + (verified ? 'info' : 'warn') + '" style="margin-bottom:12px">' +
+      '<b>' + ui.esc(verified ? acc.realName : '未实名账号') + '</b> · ' +
+      '<span class="badge t-' + verify.tone + '">' + ui.esc(verify.label) + '</span> · ' +
+      '学号 ' + ui.esc(idText) + ' · ' +
+      ui.esc((A.ROLES[acc.role] || A.ROLES.student).label) +
+      '<br><span style="opacity:.9">' + (verified
+        ? '发布的内容会显示实名信息；账号由后台统一管理。'
+        : '未实名账号不能发布活动，也不能报名或登记参加活动。') + '</span>' +
+      (verified ? ''
+        : '<br><button class="link-btn" id="mineVerify" type="button" ' +
+          'style="text-decoration:underline;color:inherit;margin-top:4px">去实名认证</button>') +
       '</div>';
   }
 
@@ -125,6 +136,10 @@
       var seg = ev.target.closest('[data-tab]');
       if (seg) { tab = seg.dataset.tab; render(); return; }
 
+      if (ev.target.closest('#mineVerify')) {
+        ui.openVerify();
+        return;
+      }
       if (ev.target.closest('#editProfile')) {
         ui.openProfile();
         return;

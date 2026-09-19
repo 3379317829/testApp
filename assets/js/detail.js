@@ -74,6 +74,7 @@
     var rel = it.relatedInfo;
     var isFav = store.isFavorite(id);
     var join = store.joinState(id);
+    var verified = global.ZHUKE.account.isVerified();
 
     var html = '';
 
@@ -89,6 +90,13 @@
     /* 状态解释 —— 把"为什么是这个状态"讲清楚 */
     html += '<div class="callout info" style="margin-bottom:12px">' +
       '<b>当前状态：' + ui.esc(st.label) + '</b><br>' + ui.esc(st.detail || '') + '</div>';
+
+    /* 未实名提示：不能参加活动 */
+    if (!verified) {
+      html += '<div class="callout warn" style="margin-bottom:12px">' +
+        '<b>当前账号未实名，暂不能报名或登记参加活动。</b>' +
+        '按平台规范，参加校园活动需先完成实名认证（绑定真实姓名与学号）。</div>';
+    }
 
     /* 关键信息结构化 */
     html += '<dl style="margin:0">';
@@ -163,7 +171,9 @@
     html += '<div class="actions">';
     html += '<button class="btn ' + (isFav ? 'is-on' : 'ghost') + '" id="dFav" type="button">' +
       (isFav ? '★ 已收藏' : '☆ 收藏') + '</button>';
-    if (join === 'signed') {
+    if (!verified) {
+      html += '<button class="btn primary" id="dVerify" type="button">去实名认证</button>';
+    } else if (join === 'signed') {
       html += '<button class="btn is-on" id="dJoin" type="button">✓ 已报名 / 已登记</button>';
     } else {
       var needAudit = item.signup && item.signup.unsure;
@@ -172,7 +182,11 @@
       html += '<button class="btn primary" id="dJoin" type="button"' + (closed ? ' disabled style="opacity:.5"' : '') + '>' + label + '</button>';
     }
     html += '</div>';
-    html += '<div class="form-hint" style="margin-top:8px">点击后记录至「我的」；实际报名请按上述方式联系发布方。</div>';
+    html += '<div class="form-hint" style="margin-top:8px">' +
+      (verified
+        ? '点击后记录至「我的」；实际报名请按上述方式联系发布方。'
+        : '未实名账号无法报名或登记参加活动，请先完成实名认证。') +
+      '</div>';
 
     var body = document.getElementById('sheetBody');
     body.innerHTML = html;
@@ -203,6 +217,11 @@
         if (global.ZHUKE.mine) global.ZHUKE.mine.render();
       });
     }
+    var verifyBtn = document.getElementById('dVerify');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', function () { global.ZHUKE.ui.openVerify(); });
+    }
+
     /* 事件：只绑定一次委托（sheetBody 元素本身不会被替换） */
   }
 

@@ -119,10 +119,15 @@
       <button type="button" class="demo-item" data-fill="student">
         <b>学生</b>
         <span>zhuke / 123456</span>
-        <em>林晓 · 学号 20260101</em>
+        <em>林晓 · 学号 20260101 · 已实名</em>
+      </button>
+      <button type="button" class="demo-item" data-fill="newbie">
+        <b>未实名</b>
+        <span>newbie / 123456</span>
+        <em>未完成实名认证 · 不能发布或参加活动</em>
       </button>
       <p class="login-note">
-        本功能为本地演示：账号绑定学号、采用实名制，账号数据仅用于展示登录、实名发布与后台管理流程，
+        本功能为本地演示：账号绑定学号并需完成实名认证，账号数据仅用于展示登录、实名认证、实名发布与后台管理流程，
         不做真实身份校验，也不与学校系统对接。
       </p>
     </div>
@@ -146,6 +151,15 @@
     <button class="sheet-close" id="accountClose" type="button" aria-label="关闭">✕</button>
   </div>
   <div class="sheet-body" id="accountBody"></div>
+</aside>
+
+<!-- 实名认证弹层 -->
+<aside class="sheet" id="verifySheet" role="dialog" aria-modal="true" aria-label="实名认证" hidden>
+  <div class="sheet-head">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <button class="sheet-close" id="verifyClose" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="sheet-body" id="verifyBody"></div>
 </aside>
 
 <!-- 我的情况弹层 -->

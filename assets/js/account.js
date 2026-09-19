@@ -21,17 +21,29 @@
     banned: { key: 'banned', label: '已封禁', tone: 'urgent' }
   };
 
+  /* 实名状态：未实名账号不得发布活动、不得参加活动 */
+  var VERIFY = {
+    yes: { key: 'yes', label: '已实名', tone: 'open' },
+    no: { key: 'no', label: '未实名', tone: 'warn' }
+  };
+
   /* ---------- 演示种子数据 ---------- */
   var SEED_ACCOUNTS = [
     {
       id: 'acc-admin', username: 'admin', password: 'admin123',
       realName: '系统管理员', studentId: '00000000', role: 'admin',
-      status: 'active', createdAt: '2026-09-19T08:00:00.000Z', seed: true
+      status: 'active', verified: true, createdAt: '2026-09-19T08:00:00.000Z', seed: true
     },
     {
       id: 'acc-demo', username: 'zhuke', password: '123456',
       realName: '林晓', studentId: '20260101', role: 'student',
-      status: 'active', createdAt: '2026-09-19T08:00:00.000Z', seed: true
+      status: 'active', verified: true, createdAt: '2026-09-19T08:00:00.000Z', seed: true
+    },
+    {
+      /* 未实名演示账号：未完成实名认证，不能发布与参加活动 */
+      id: 'acc-newbie', username: 'newbie', password: '123456',
+      realName: '', studentId: '20260315', role: 'student',
+      status: 'active', verified: false, createdAt: '2026-09-19T08:00:00.000Z', seed: true
     }
   ];
 
@@ -89,6 +101,12 @@
     return id.slice(0, 4) + '*'.repeat(Math.max(id.length - 8, 0)) + id.slice(-4);
   }
 
+  /** 兼容早期数据：没有 verified 字段的账号，按是否已有真实姓名判定 */
+  function normalize(acc) {
+    if (acc.verified === undefined) acc.verified = !!acc.realName;
+    return acc;
+  }
+
   /* ---------- 账户读写 ---------- */
   function ensureSeed() {
     var s = store.all();
@@ -108,7 +126,8 @@
   }
 
   function byId(id) {
-    return rawAccounts().filter(function (a) { return a.id === id; })[0] || null;
+    var acc = rawAccounts().filter(function (a) { return a.id === id; })[0] || null;
+    return acc ? normalize(acc) : null;
   }
 
   function byUsername(username) {
@@ -145,6 +164,7 @@
   var account = {
     ROLES: ROLES,
     STATUS: STATUS,
+    VERIFY: VERIFY,
     ensureSeed: ensureSeed,
     maskName: maskName,
     maskStudentId: maskStudentId,
@@ -188,6 +208,40 @@
       return !!cur && cur.role === 'admin';
     },
 
+    /** 当前账号是否已完成实名认证 */
+    isVerified: function () {
+      var cur = account.current();
+      return !!cur && cur.verified !== false;
+    },
+
+    /** 账号的实名状态（用于展示「已实名 / 未实名」） */
+    verifyStatusOf: function (acc) {
+      return (acc && acc.verified) ? VERIFY.yes : VERIFY.no;
+    },
+
+    /** 提交实名认证：未实名账号在此绑定真实姓名与学号，学号需唯一 */
+    verify: function (payload) {
+      var cur = account.current();
+      if (!cur) return { ok: false, errors: ['登录状态已失效，请重新登录'] };
+      var realName = String(payload.realName || '').trim();
+      var studentId = String(payload.studentId || '').trim();
+      var errors = [];
+      if (!/^[\u4e00-\u9fa5·]{2,10}$/.test(realName)) errors.push('请填写 2—10 位中文真实姓名');
+      if (!/^\d{6,14}$/.test(studentId)) errors.push('学号需 6—14 位数字');
+      var dup = rawAccounts().filter(function (a) {
+        return a.studentId === studentId && a.id !== cur.id;
+      })[0];
+      if (dup) errors.push('该学号已被其他账号绑定（实名制下一人一号）');
+      if (errors.length) return { ok: false, errors: errors };
+
+      cur.realName = realName;
+      cur.studentId = studentId;
+      cur.verified = true;
+      cur.verifiedAt = new Date().toISOString();
+      store.save();
+      return { ok: true, account: cur };
+    },
+
     /** 新增账号（仅管理员可用，界面侧限制入口） */
     create: function (payload) {
       var errors = validate(payload);
@@ -200,6 +254,7 @@
         studentId: String(payload.studentId).trim(),
         role: payload.role === 'admin' ? 'admin' : 'student',
         status: 'active',
+        verified: true,   /* 后台新增账号时已录入真实姓名与学号，视为已实名 */
         createdAt: new Date().toISOString()
       };
       var s = store.all();
