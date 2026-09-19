@@ -84,7 +84,7 @@
     var p = store.profile();
     var html = '';
     html += '<h2 class="detail-title">设置我的情况</h2>';
-    html += '<p class="form-hint" style="margin-bottom:14px">用于判断"这条信息我符不符合"。只保存在本机，不会上传。</p>';
+    html += '<p class="form-hint" style="margin-bottom:14px">用来筛哪些活动你够条件。只存在你这台设备上，不会传出去。</p>';
 
     html += '<div class="field-row"><label>我的年级</label><div class="pill-row" id="pickGrade">';
     GRADES.forEach(function (g) {
@@ -105,7 +105,7 @@
     html += '</div></div>';
 
     html += '<div class="form-actions"><button class="btn primary" id="profileDone" type="button">完成</button>' +
-            '<button class="btn ghost" id="profileReset" type="button">清空本机数据</button></div>';
+            '<button class="btn ghost" id="profileReset" type="button">清掉这些数据</button></div>';
 
     $('#profileBody').innerHTML = html;
 
@@ -132,15 +132,15 @@
     $('#profileDone').addEventListener('click', function () {
       store.setOnboarded();
       closeSheets();
-      toast('已按你的情况重新判断资格');
+      toast('好，按新情况重新算了一遍');
     });
     $('#profileReset').addEventListener('click', function () {
-      if (!window.confirm('清空本机保存的收藏、报名、我的发布和个人设置？（不可撤销）')) return;
+      if (!window.confirm('收藏、报名记录、你发过的内容、还有这些设置都会删掉，确定吗？')) return;
       store.reset();
       renderProfileSummary();
       render();
       if (global.ZHUKE.mine) global.ZHUKE.mine.render();
-      toast('本机数据已清空');
+      toast('都清掉了');
     });
   }
 
@@ -252,7 +252,7 @@
     $('#resultCount').textContent = '共 ' + decorated.length + ' 条';
     $('#list').innerHTML = decorated.length
       ? decorated.map(cardHtml).join('')
-      : '<div class="empty"><span>🫥</span>没有符合条件的信息，试试放宽筛选或清空搜索。</div>';
+      : '<div class="empty"><span>🫥</span>没有符合条件的，换个条件或者清掉搜索词试试。</div>';
 
     var mineCount = store.favorites().length + store.joinedList().length + store.myPosts().length;
     $('#mineDot').classList.toggle('is-on', mineCount > 0);
@@ -288,7 +288,7 @@
       renderSelects();
       renderQuick();
       render();
-      toast('筛选条件已重置');
+      toast('筛选清空了');
     });
 
     $('#list').addEventListener('click', function (ev) {

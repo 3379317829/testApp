@@ -12,12 +12,12 @@
 
   /* ---------- 可疑内容检测 ---------- */
   var HIGH = [
-    { re: /(日结|刷单|垫付|先交[钱费]|押金|保证金)/, why: '出现"日结/刷单/垫付/押金"等特征词' },
-    { re: /(私人微信|加我微信|加微信|私聊转账)/, why: '要求添加私人微信或私下转账' }
+    { re: /(日结|刷单|垫付|先交[钱费]|押金|保证金)/, why: '写了“日结”“刷单”“垫付”“押金”这类词' },
+    { re: /(私人微信|加我微信|加微信|私聊转账)/, why: '让人加私人微信、私下转账' }
   ];
   var MID = [
-    { re: /(优惠|折扣|返现|促销|购买链接|下单)/, why: '包含商家优惠或购买引导' },
-    { re: /(https?:\/\/|扫码|二维码)/, why: '包含外部链接或二维码' }
+    { re: /(优惠|折扣|返现|促销|购买链接|下单)/, why: '带着商家优惠、引导下单' },
+    { re: /(https?:\/\/|扫码|二维码)/, why: '带着外部链接或者二维码' }
   ];
 
   function detectRisk(text) {
@@ -26,14 +26,14 @@
     if (hits.length) {
       return {
         level: 'high', type: '疑似风险信息',
-        reason: hits.join('；') + '。请勿先转账或提供身份证、银行卡、验证码等敏感信息；建议通过官方渠道核实发布方身份。'
+        reason: hits.join('；') + '。先别转钱，也别把身份证、银行卡、验证码给出去，最好找官方渠道问一句。'
       };
     }
     for (var j = 0; j < MID.length; j++) {
       if (MID[j].re.test(text)) {
         return {
           level: 'medium', type: '疑似推广内容',
-          reason: MID[j].why + '，与校园活动的关联可能较弱，参与前请自行判断。'
+          reason: MID[j].why + '，跟校园活动关系不大，自己掂量着来。'
         };
       }
     }
@@ -43,11 +43,11 @@
   /* ---------- 表单里的发布物 → 引擎可识别的信息条目 ---------- */
   function toItem(post) {
     var missing = [];
-    if (!post.times || !post.times.length) missing.push('活动时间未提供');
-    if (!post.place || post.place.status !== 'known') missing.push('活动地点未提供');
-    if (!post.capacity || post.capacity.status !== 'known') missing.push('名额未提供');
-    if (!post.fee || post.fee.status !== 'known') missing.push('费用未提供');
-    missing.push('发布方为学生个人，未经平台审核');
+    if (!post.times || !post.times.length) missing.push('什么时间没说');
+    if (!post.place || post.place.status !== 'known') missing.push('在哪儿没说');
+    if (!post.capacity || post.capacity.status !== 'known') missing.push('招多少人没说');
+    if (!post.fee || post.fee.status !== 'known') missing.push('要不要花钱没说');
+    missing.push('学生自己发的，没人审过');
 
     return {
       id: post.no || '我',
@@ -55,10 +55,10 @@
       source: 'student',
       category: post.category || 'sports',
       raw: post.desc || post.title,
-      times: post.times || [{ kind: 'unknown', label: '活动时间', at: null, text: '未提供' }],
+      times: post.times || [{ kind: 'unknown', label: '活动时间', at: null, text: '没写' }],
       place: post.place || { status: 'unknown' },
-      audience: post.audience || { text: '未限制', grades: ['大一', '大二', '大三', '大四'] },
-      requirement: post.requirement || '未提供',
+      audience: post.audience || { text: '谁都能来', grades: ['大一', '大二', '大三', '大四'] },
+      requirement: post.requirement || '没写',
       fee: post.fee || { status: 'unknown' },
       capacity: post.capacity || { status: 'unknown' },
       signup: post.signup || { required: true, text: '按发布说明联系发起人' },
@@ -79,33 +79,33 @@
 
     return '' +
       '<p class="form-hint" style="margin-bottom:12px">' +
-      '同学可以在这里发布自己的活动或招募。发布后会<b>直接进入发现页列表</b>，并标注「学生个人发布 · 未经审核」。' +
-      '平台会自动检查可疑内容（如"日结兼职""加私人微信"）并给出风险提示，但不对内容真实性背书。</p>' +
+      '自己攒的局、组队、约球、找搭子，都能发在这儿。发完就出现在发现页，别人看得到。' +
+      '内容里要是出现"日结""加微信"这类字眼，会挂个提醒，但真假还得自己留神。</p>' +
 
-      '<div class="field-row"><label>标题 *</label>' +
+      '<div class="field-row"><label>起个标题 *</label>' +
       '<input id="pTitle" type="text" maxlength="40" placeholder="例：周末羽毛球约球（缺 2 人）"></div>' +
 
       '<div class="field-row"><label>类型</label><select id="pCat">' + catOptions + '</select></div>' +
 
-      '<div class="field-row"><label>活动时间</label>' +
+      '<div class="field-row"><label>什么时候</label>' +
       '<input id="pTime" type="datetime-local">' +
       '<label class="switch" style="margin-top:6px;font-size:12.5px;color:var(--muted)">' +
       '<input type="checkbox" id="pTimeUnknown"> 时间还没定 / 待确认</label></div>' +
 
-      '<div class="field-row"><label>地点</label>' +
+      '<div class="field-row"><label>在哪儿</label>' +
       '<input id="pPlace" type="text" maxlength="30" placeholder="例：体育馆 3 号场（未定可留空）"></div>' +
 
-      '<div class="field-row"><label>适合谁参加</label>' +
+      '<div class="field-row"><label>谁可以来</label>' +
       '<input id="pWho" type="text" maxlength="30" value="面向全校学生"></div>' +
 
-      '<div class="field-row"><label>补充说明</label>' +
+      '<div class="field-row"><label>再补充点</label>' +
       '<textarea id="pDesc" maxlength="200" placeholder="人数、费用、报名方式、需要准备什么……"></textarea></div>' +
 
-      '<div class="field-row"><label>报名 / 联系方式</label>' +
+      '<div class="field-row"><label>怎么报名 / 怎么联系你</label>' +
       '<input id="pSignup" type="text" maxlength="40" placeholder="例：进群填表 / 评论区留言"></div>' +
 
       '<div class="form-actions">' +
-      '<button class="btn primary" id="pSubmit" type="button">发布到发现页</button>' +
+      '<button class="btn primary" id="pSubmit" type="button">发出去</button>' +
       '<button class="btn ghost" id="pClear" type="button">清空</button></div>' +
       '<div class="form-hint" id="pPreview"></div>';
   }
@@ -137,7 +137,7 @@
       times: times,
       timeText: timeText,
       place: placeText ? { status: 'known', text: placeText } : { status: 'pending', text: '待确认' },
-      audience: { text: who || '未限制', grades: ['大一', '大二', '大三', '大四'] },
+      audience: { text: who || '谁都能来', grades: ['大一', '大二', '大三', '大四'] },
       requirement: desc || '见补充说明',
       signup: { required: true, text: signupText || '按补充说明联系发起人', unsure: true },
       risk: detectRisk([title, desc, signupText, placeText].join(' '))
@@ -173,7 +173,7 @@
     document.getElementById('pSubmit').addEventListener('click', submit);
     document.getElementById('pClear').addEventListener('click', function () {
       render();
-      ui.toast('已清空表单');
+      ui.toast('清空了');
     });
     preview();
   }
@@ -184,13 +184,13 @@
     var risk = f.risk;
     document.getElementById('pPreview').innerHTML = risk
       ? '<span class="badge risk">' + ui.esc(risk.type) + '</span> <span style="color:var(--warn)">' + ui.esc(risk.reason) + '</span>'
-      : '<span class="badge t-muted">未检测到可疑特征</span> 发布后将标注为「学生个人发布 · 未经审核」。';
+      : '<span class="badge t-muted">没看出什么可疑的</span> 发出去会带上“学生自己发的”标记。';
   }
 
   function submit() {
     var f = readForm();
-    if (!f.title) { ui.toast('请先填标题'); return; }
-    if (!f.desc) { ui.toast('补充说明建议填一下，方便同学判断'); return; }
+    if (!f.title) { ui.toast('标题还没写'); return; }
+    if (!f.desc) { ui.toast('补两句说明吧，别人才好判断'); return; }
 
     f.no = nextNo();
     var post = store.addPost(f);
@@ -201,7 +201,7 @@
 
     ui.closeSheets();
     document.querySelector('.tab[data-view="discover"]').click();
-    ui.toast(f.risk ? '已发布（已加风险提示）' : '发布成功，已进入发现页列表');
+    ui.toast(f.risk ? '发出去了，风险提醒也挂上了' : '发好了，去发现页能看到');
   }
 
   global.ZHUKE.publish = {

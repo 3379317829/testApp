@@ -25,7 +25,7 @@
       .sort(function (a, b) { return a.st.nextAt - b.st.nextAt; });
 
     if (!soon.length) return '';
-    return '<div class="callout warn" style="margin-bottom:12px"><b>⏰ 你收藏的活动中，这些快到点了：</b><br>' +
+    return '<div class="callout warn" style="margin-bottom:12px"><b>⏰ 你收藏的这些快到期了：</b><br>' +
       soon.map(function (x) {
         return '· ' + ui.esc(x.i.title) + ' —— ' + ui.esc(x.st.detail || '');
       }).join('<br>') + '</div>';
@@ -45,7 +45,7 @@
 
   function favList() {
     var ids = store.favorites();
-    if (!ids.length) return '<div class="empty"><span>⭐</span>还没有收藏。在发现页点卡片右上角 ☆ 就能收藏，刷新后依然在。</div>';
+    if (!ids.length) return '<div class="empty"><span>⭐</span>还没收藏过。在发现页点卡片右上角的 ☆ 就存下来了，刷新也还在。</div>';
     return '<div class="mini-list">' + ids.map(function (id) {
       var it = byId(id);
       if (!it) return '';
@@ -56,22 +56,22 @@
 
   function joinList() {
     var rows = store.joinedList();
-    if (!rows.length) return '<div class="empty"><span>📝</span>还没有报名或登记记录。打开活动详情点「我要报名 / 登记意向」试试。</div>';
+    if (!rows.length) return '<div class="empty"><span>📝</span>还没有报名记录。点开一个活动，在页面底下点「我要报名」就记上了。</div>';
     return '<div class="mini-list">' + rows.map(function (r) {
       var it = byId(r.id);
       var title = it ? it.title : r.id;
       var sub = it ? (E.statusOf(it, Date.now()).detail || '') : '已记录';
-      var tag = (it && it.signup && it.signup.unsure) ? '待审核 / 待确认' : '已记录';
+      var tag = (it && it.signup && it.signup.unsure) ? '还要等对方确认' : '记下了';
       return miniHtml(it ? it.id : '', title, tag + '｜' + sub, { goto: it ? it.id : '' });
     }).join('') + '</div>';
   }
 
   function mineList() {
     var posts = store.myPosts();
-    if (!posts.length) return '<div class="empty"><span>📣</span>你还没有发布过内容。去「发布」页发一条试试，发布后会进入发现页列表。</div>';
+    if (!posts.length) return '<div class="empty"><span>📣</span>还没发过东西。去「发布」页写一条，发完就出现在发现页。</div>';
     return '<div class="mini-list">' + posts.map(function (p) {
       var risk = p.risk ? ' · ' + p.risk.type : '';
-      return miniHtml('', p.title, '我发布的｜' + (p.timeText || '时间待定') + risk, { del: p.id });
+      return miniHtml('', p.title, '我发的｜' + (p.timeText || '时间待定') + risk, { del: p.id });
     }).join('') + '</div>';
   }
 
@@ -82,8 +82,8 @@
     var html = '';
 
     html += '<div class="callout info" style="margin-bottom:12px">' +
-      '<b>我的情况：</b>' + ui.esc(p.grade) + ' · ' + ui.esc(p.level) + ' · 每周可投入 ' + ui.esc(String(p.hours)) + ' 小时' +
-      '<br><span style="opacity:.85">发现页的"只看我符合条件的"会按这个判断。<button class="link-btn" id="editProfile" type="button" style="color:inherit;text-decoration:underline">修改</button></span>' +
+      '<b>你的情况：</b>' + ui.esc(p.grade) + ' · ' + ui.esc(p.level) + ' · 每周可投入 ' + ui.esc(String(p.hours)) + ' 小时' +
+      '<br><span style="opacity:.85">发现页那个「只看我符合条件的」，就是照这个筛的。<button class="link-btn" id="editProfile" type="button" style="color:inherit;text-decoration:underline">修改</button></span>' +
       '</div>';
 
     html += countdownHtml();
@@ -118,11 +118,11 @@
         var id = del.dataset.del;
         if (tab === 'post') {
           store.removePost(id);
-          ui.toast('已删除该发布');
+          ui.toast('删掉了');
         } else {
           store.setJoin(id, null);
           store.toggleFavorite(id);
-          ui.toast('已移除');
+          ui.toast('移掉了');
         }
         render();
         global.ZHUKE.render();

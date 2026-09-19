@@ -16,7 +16,7 @@
       <span class="brand-logo" aria-hidden="true">🐷</span>
       <span class="brand-text">
         <strong>掌上猪科</strong>
-        <small>校园活动与机会 · 一眼看懂能不能参加</small>
+        <small>校园里的活动、比赛、招募，一处看全</small>
       </span>
     </div>
     <button class="profile-btn" id="profileBtn" type="button" title="设置我的情况">
@@ -28,8 +28,8 @@
 <main class="wrap">
 
   <section class="notice" id="dataNotice">
-    <strong>时间背景</strong>：以考核当日 <time id="nowLabel">2026-09-19</time> 为基准实时计算活动状态。
-    <span class="notice-dim">数据来自考核题目所给模拟材料，不代表学校真实通知。</span>
+    下面的状态都是按今天（<time id="nowLabel">2026-09-19</time>）现算的：哪个在报名、哪个快截止、哪个已经过了。
+    <span class="notice-dim">这些信息来自考核给的模拟材料，不是学校的真实通知。</span>
   </section>
 
   <section class="stats" id="stats" aria-label="今日概览"></section>
@@ -39,7 +39,7 @@
     <div class="filterbar">
       <label class="search">
         <span aria-hidden="true">🔍</span>
-        <input id="q" type="search" placeholder="搜索活动、招募、技能关键词（如 Git、志愿、零基础）" autocomplete="off">
+        <input id="q" type="search" placeholder="搜活动、招募、关键词，比如 Git、志愿、零基础" autocomplete="off">
       </label>
       <div class="selects">
         <select id="cat" aria-label="分类">
@@ -54,7 +54,7 @@
       <span id="resultCount" class="count">共 26 条</span>
       <label class="switch">
         <input type="checkbox" id="fitOnly">
-        <span>只看我符合条件的</span>
+        <span>只看我能参加的</span>
       </label>
       <button class="link-btn" id="resetFilter" type="button">重置</button>
     </div>
@@ -63,18 +63,18 @@
   <section id="list" class="list" aria-live="polite"></section>
 
   <section id="minePanel" class="panel hidden">
-    <h2 class="panel-title">我的</h2>
+    <h2 class="panel-title">我的收藏和报名</h2>
     <div id="mineBody"></div>
   </section>
 
   <section id="publishPanel" class="panel hidden">
-    <h2 class="panel-title">我要发布</h2>
+    <h2 class="panel-title">发个活动 / 招个人</h2>
     <div id="publishBody"></div>
   </section>
 
   <footer class="foot">
     <p>掌上猪科 · 珠海科技学院计算机协会软件部 2026 秋季纳新第二轮考核作品</p>
-    <p class="foot-dim">纯静态前端 · 数据本地保存 · 材料为模拟信息</p>
+    <p class="foot-dim">收藏和报名都只存在你这台设备上 · 材料是模拟的</p>
   </footer>
 </main>
 

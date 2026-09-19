@@ -42,13 +42,13 @@
         { kind: 'deadline', label: '报名截止', at: '2026-09-24T22:00', text: '9月24日 22:00' },
         { kind: 'start', label: '首次训练（原计划）', at: '2026-09-20T19:00', text: '9月20日起每周六 19:00', supersededBy: '09' }
       ],
-      place: { status: 'known', text: '见 09 号补充通知：实验楼 A402' },
+      place: { status: 'unknown', text: '原通知未提供活动地点' },
       audience: { text: '面向全校学生', grades: ['大一', '大二', '大三', '大四'] },
       requirement: '零基础可参加',
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '需报名' },
-      missing: ['主办方未标注', '训练费用未提供', '名额未提供'],
+      missing: ['谁办的没写', '要不要收费没说', '招多少人没说', '原通知未提供活动地点'],
       risk: null,
       related: ['09'],
       tags: ['零基础友好', '新生可参加']
@@ -63,16 +63,16 @@
         { kind: 'start', label: '开课', at: '2026-09-19T19:00', text: '今天 19:00' },
         { kind: 'end', label: '预计结束', at: '2026-09-19T20:30', text: '约 90 分钟' }
       ],
-      place: { status: 'known', text: '计算机学院教学楼（具体教室未提供）' },
+      place: { status: 'known', text: '计算机学院教学楼（具体哪间教室没说）' },
       audience: { text: '面向全校学生', grades: ['大一', '大二', '大三', '大四'] },
       requirement: '无需报名',
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: false, text: '无需报名' },
-      missing: ['主办方未标注', '具体教室未提供'],
+      missing: ['谁办的没写', '具体哪间教室没说'],
       risk: null,
       related: [],
-      tags: ['今天', '零基础友好', '免报名']
+      tags: ['今天', '入门课', '免报名']
     },
     {
       id: '03',
@@ -89,7 +89,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown', text: '见 20 号补充说明：开发方向名额已满' },
       signup: { required: true, text: '需提交简短自我介绍' },
-      missing: ['主办方未标注', '活动地点未提供', '线下面谈安排未提供'],
+      missing: ['谁办的没写', '在哪儿没说', '线下怎么见面没说'],
       risk: null,
       related: ['20'],
       tags: ['需投入时间']
@@ -110,7 +110,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: false, text: '直播已结束，无需报名' },
-      missing: ['主办方未标注', '回放具体地址未提供', '回放上线时间仅为预计'],
+      missing: ['谁办的没写', '回放在哪儿看没说', '回放上线的时间只是预计'],
       risk: null,
       related: [],
       tags: ['已结束', '可等回放']
@@ -132,10 +132,10 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '需报名，9月20日12:00截止' },
-      missing: ['主办方未标注', '集合地点未提供', '名额未提供'],
+      missing: ['谁办的没写', '集合在哪儿没说', '招多少人没说'],
       risk: null,
       related: [],
-      tags: ['报名即将截止', '可认定志愿时长']
+      tags: ['报名即将截止', '预计服务 8 小时']
     },
     {
       id: '06',
@@ -153,7 +153,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'known', text: '限 30 人' },
       signup: { required: true, text: '报名时间未注明，满员即止', unsure: true },
-      missing: ['主办方未标注', '报名截止时间未注明（满员即止）', '活动地点未提供'],
+      missing: ['谁办的没写', '没说报名截止时间，招满就停', '在哪儿没说'],
       risk: null,
       related: [],
       tags: ['零基础友好', '名额有限']
@@ -174,7 +174,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '先校内意向登记，后提交作品（两个不同节点）' },
-      missing: ['主办方未标注', '赛事地点 / 线上平台未提供', '报名费未提供'],
+      missing: ['谁办的没写', '在哪比、线上怎么参加都没说', '要不要交钱没说'],
       risk: null,
       related: [],
       tags: ['两个截止时间', '需组队']
@@ -194,7 +194,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown', text: '满员即止' },
       signup: { required: true, text: '长期招募，无明确截止时间' },
-      missing: ['主办方未标注', '报名方式未提供', '截止时间未提供'],
+      missing: ['谁办的没写', '怎么报名没说', '截止时间未提供'],
       risk: null,
       related: [],
       tags: ['仅大一大二', '需 Git 基础', '长期']
@@ -214,7 +214,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: false, text: '已报名者无需重复提交' },
-      missing: ['训练费用未提供', '名额未提供'],
+      missing: ['要不要收费没说', '招多少人没说'],
       risk: null,
       related: ['01'],
       isUpdate: true,
@@ -236,7 +236,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: false, text: '无需报名' },
-      missing: ['主办方未标注', '线上直播入口未提供'],
+      missing: ['谁办的没写', '线上在哪儿看没说'],
       risk: null,
       related: [],
       tags: ['今天', '免报名', '线上同步']
@@ -253,14 +253,14 @@
       ],
       place: { status: 'unknown' },
       audience: { text: '面向全校学生', grades: ['大一', '大二', '大三', '大四'] },
-      requirement: '对科研感兴趣即可，无基础要求',
+      requirement: '材料未写明参加条件',
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
-      signup: { required: null, text: '报名要求未提供' },
-      missing: ['主办方未标注', '活动地点未提供', '是否需要报名未提供'],
+      signup: { required: null, text: '怎么报名没说' },
+      missing: ['谁办的没写', '在哪儿没说', '要不要报名没说'],
       risk: null,
       related: [],
-      tags: ['零基础友好']
+      tags: []
     },
     {
       id: '12',
@@ -277,7 +277,7 @@
       fee: { status: 'unknown', text: '材料未提供费用信息' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '需报名' },
-      missing: ['主办方未标注', '参赛费用未提供（请以官方渠道为准）', '赛程 / 比赛形式未提供'],
+      missing: ['谁办的没写', '要不要交钱没说，以官方为准', '赛程 / 比赛形式未提供'],
       risk: null,
       related: [],
       tags: ['个人参赛']
@@ -297,7 +297,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '需报名' },
-      missing: ['主办方未标注', '截止具体时刻未提供', '工作地点未提供', '是否有补贴未提供'],
+      missing: ['谁办的没写', '只说 9 月 21 日截止，没写几点', '工作在哪儿没说', '有没有补贴没说'],
       risk: null,
       related: [],
       tags: ['限大二及以上', '需投入时间']
@@ -318,7 +318,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'known', text: '限 40 人' },
       signup: { required: true, text: '需提前预约；提交报名表 ≠ 录取，以审核通知为准', unsure: true },
-      missing: ['主办方未标注', '预约截止时间未提供', '活动地点未提供'],
+      missing: ['谁办的没写', '什么时候截止预约没说', '在哪儿没说'],
       risk: null,
       related: [],
       tags: ['新生优先', '零基础友好', '名额有限', '需审核']
@@ -339,7 +339,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '两阶段提交（创意方案 → 最终作品）' },
-      missing: ['主办方未标注', '提交渠道未提供', '评审标准未提供'],
+      missing: ['谁办的没写', '作品交到哪儿没说', '怎么评没说'],
       risk: null,
       related: [],
       tags: ['两个截止时间', '可个人可组队']
@@ -349,7 +349,7 @@
       title: '校园摄影志愿者招募',
       source: 'unknown',
       category: 'volunteer',
-      raw: '长期招募；参与校内大型活动摄影；具体报名截止时间未注明；有摄影设备者优先但不作硬性要求',
+      raw: '长期招募；参与校内大型活动摄影；具体没说报名截止时间；有摄影设备者优先但不作硬性要求',
       times: [
         { kind: 'longterm', label: '招募状态', at: null, text: '长期招募' }
       ],
@@ -359,7 +359,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '长期招募，截止时间未注明' },
-      missing: ['主办方未标注', '报名截止时间未注明', '报名方式未提供'],
+      missing: ['谁办的没写', '没说报名截止时间', '怎么报名没说'],
       risk: null,
       related: [],
       tags: ['长期']
@@ -376,14 +376,14 @@
       ],
       place: { status: 'known', text: '线上网盘（链接未提供）' },
       audience: { text: '未限制（面向在校学生）', grades: ['大一', '大二', '大三', '大四'] },
-      requirement: '零基础可学',
+      requirement: '材料未写明参加条件',
       fee: { status: 'known', text: '材料未提及收费' },
       capacity: { status: 'unknown' },
       signup: { required: false, text: '无需报名' },
-      missing: ['发布方未标注', '网盘链接未提供（提取信息可能失效）'],
+      missing: ['谁发的没写', '网盘链接没给，提取信息可能会过期'],
       risk: null,
       related: [],
-      tags: ['零基础友好', '有时效', '资源']
+      tags: ['长期开放', '网盘信息有时效']
     },
     {
       id: '18',
@@ -400,8 +400,8 @@
       requirement: '不限基础',
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
-      signup: { required: null, text: '报名要求未提供' },
-      missing: ['主办方未标注', '交流地点未提供', '线上参与方式未提供'],
+      signup: { required: null, text: '怎么报名没说' },
+      missing: ['谁办的没写', '交流在哪儿没说', '线上怎么参加没说'],
       risk: null,
       related: [],
       tags: ['今天', '零基础友好', '长期']
@@ -422,7 +422,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'known', text: '名额有限，现场可能有余位' },
       signup: { required: true, text: '正式报名已截止，可到现场尝试候补', unsure: true },
-      missing: ['主办方未标注', '活动地点未提供', '候补是否成功无法提前确认'],
+      missing: ['谁办的没写', '在哪儿没说', '能不能候补上，得到现场才知道'],
       risk: null,
       related: [],
       tags: ['可现场候补']
@@ -442,7 +442,7 @@
       fee: { status: 'unknown' },
       capacity: { status: 'known', text: '开发方向名额已满' },
       signup: { required: true, text: '仅设计与材料方向可报名' },
-      missing: ['发布方未标注', '活动地点未提供'],
+      missing: ['谁发的没写', '在哪儿没说'],
       risk: null,
       related: ['03'],
       isUpdate: true,
@@ -463,10 +463,10 @@
       fee: { status: 'unknown' },
       capacity: { status: 'known', text: '座位有限' },
       signup: { required: false, text: '无需报名，先到先得' },
-      missing: ['结束时间未提供'],
+      missing: ['几点结束没说'],
       risk: null,
       related: [],
-      tags: ['学院官方', '免报名', '零基础友好']
+      tags: ['学院官方', '免报名']
     },
     {
       id: '22',
@@ -482,8 +482,8 @@
       requirement: '费用 AA',
       fee: { status: 'known', text: '费用 AA（具体金额未提供）' },
       capacity: { status: 'known', text: '计划 6—8 人' },
-      signup: { required: true, text: '需联系发起人（联系方式未提供）' },
-      missing: ['场地未最终确认', '联系方式未提供', '具体费用未提供'],
+      signup: { required: true, text: '需联系发起人（怎么联系没说）' },
+      missing: ['场地还没定下来', '怎么联系没说', '具体要不要花钱没说'],
       risk: null,
       related: [],
       tags: ['学生自发', '信息待确认']
@@ -493,24 +493,24 @@
       title: '学生发起｜AI工具交流搭子招募',
       source: 'student',
       category: 'sports',
-      raw: '学生个人发布；拟于9月21日晚开展；欢迎零基础；报名后拉群；具体地点未确定',
+      raw: '学生个人发布；拟于9月21日晚开展；欢迎零基础；报名后拉群；具体在哪儿还没定',
       times: [
-        { kind: 'start', label: '拟开展时间', at: '2026-09-21T19:00', text: '拟于 9月21日晚（具体时间未确定）', approximate: true }
+        { kind: 'start', label: '拟开展时间', at: '2026-09-21T19:00', text: '拟于 9月21日晚（时间没定死）', approximate: true }
       ],
-      place: { status: 'pending', text: '具体地点未确定' },
+      place: { status: 'pending', text: '具体在哪儿还没定' },
       audience: { text: '欢迎零基础', grades: ['大一', '大二', '大三', '大四'] },
       requirement: '欢迎零基础；报名后拉群',
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '报名后拉群（报名入口未提供）' },
-      missing: ['具体时间未确定', '地点未确定', '报名方式未提供'],
+      missing: ['时间没定死', '在哪儿还没定', '怎么报名没说'],
       risk: null,
       related: [],
       tags: ['学生自发', '零基础友好', '信息待确认']
     },
     {
       id: '24',
-      title: '学生发起｜“校园兼职福利分享”',
+      title: '学生发起｜“校园兼职福利分享”（小心）',
       source: 'student',
       category: 'recruit',
       raw: '学生个人发布；称“零门槛、日结”，要求添加私人微信获取详情；未提供主办方、地点和完整内容',
@@ -523,11 +523,11 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: true, text: '要求添加私人微信获取详情' },
-      missing: ['主办方未提供', '活动时间未提供', '地点未提供', '完整内容未提供'],
+      missing: ['主办方未提供', '什么时间没说', '在哪儿没说', '完整内容未提供'],
       risk: {
         level: 'high',
         type: '疑似风险信息',
-        reason: '以“零门槛、日结”吸引，但未提供主办方、地点与完整内容，仅要求添加私人微信。此类信息存在兼职诈骗、信息泄露风险，请勿先转账或提供身份证、银行卡等敏感信息。'
+        reason: '只写了“零门槛、日结”，想知道详情得加私人微信，谁办的、在哪、具体干什么全没说。这种十有八九是坑，别先转钱，也别把身份证、银行卡、验证码发出去。'
       },
       related: [],
       tags: ['高风险提示', '建议核实']
@@ -537,7 +537,7 @@
       title: '学生发起｜数码新品体验交流',
       source: 'student',
       category: 'resource',
-      raw: '学生个人发布；标题为技术交流，正文主要介绍某商家优惠及购买链接；活动时间、地点未注明',
+      raw: '学生个人发布；标题为技术交流，正文主要介绍某商家优惠及购买链接；活动时间、在哪儿没说',
       times: [
         { kind: 'unknown', label: '活动时间', at: null, text: '未注明' }
       ],
@@ -547,11 +547,11 @@
       fee: { status: 'unknown' },
       capacity: { status: 'unknown' },
       signup: { required: false, text: '未注明' },
-      missing: ['活动时间未注明', '地点未注明', '主办方未提供'],
+      missing: ['什么时间没说', '在哪儿没说', '主办方未提供'],
       risk: {
         level: 'medium',
         type: '疑似推广内容',
-        reason: '标题写“技术交流”，正文主要是某商家优惠与购买链接，与校园活动的关联较弱，判断为疑似商家推广，请谨慎对待链接与付款。'
+        reason: '标题说是技术交流，正文其实在推某个商家的优惠和购买链接，跟校园活动关系不大，像是来打广告的。点链接和付款前留个心眼。'
       },
       related: [],
       tags: ['疑似推广', '建议核实']
@@ -571,10 +571,10 @@
       fee: { status: 'unknown' },
       capacity: { status: 'known', text: '场地容量有限' },
       signup: { required: false, text: '无需提前报名，容量有限' },
-      missing: ['具体场地位置未提供', '活动结束时间未提供'],
+      missing: ['具体在哪儿没说', '几点结束没说'],
       risk: null,
       related: [],
-      tags: ['学院官方', '免报名', '零基础友好']
+      tags: ['学院官方', '免报名']
     }
   ];
 
