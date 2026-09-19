@@ -199,8 +199,9 @@
     /** 登录：校验用户名、密码与状态 */
     login: function (account, password) {
       var acc = byLogin(account);
-      if (!acc) return { ok: false, message: '该学号未注册，请核对后重试' };
-      if (acc.password !== String(password)) return { ok: false, message: '密码不正确，请使用「我的珠科」APP 的密码' };
+      /* 账号不存在与密码错误给同一提示，避免暴露学号是否已注册 */
+      if (!acc) return { ok: false, message: '账号或密码错误' };
+      if (acc.password !== String(password)) return { ok: false, message: '账号或密码错误' };
       if (acc.status === 'banned') return { ok: false, message: '该账号已被封禁，无法登录' };
       var s = store.all();
       s.session = { accountId: acc.id, at: new Date().toISOString() };
