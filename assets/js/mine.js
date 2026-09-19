@@ -45,7 +45,7 @@
 
   function favList() {
     var ids = store.favorites();
-    if (!ids.length) return '<div class="empty"><span>⭐</span>还没收藏过。在发现页点卡片右上角的 ☆ 就存下来了，刷新也还在。</div>';
+    if (!ids.length) return '<div class="empty"><span>⭐</span>还没收藏过。在发现页点卡片右上角的 ☆ 就能存下来。</div>';
     return '<div class="mini-list">' + ids.map(function (id) {
       var it = byId(id);
       if (!it) return '';

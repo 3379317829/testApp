@@ -37,18 +37,39 @@
   }
 
   /* ---------------- 弹层控制 ---------------- */
+  var closeTimer = null;
+
   function openSheet(which) {
     var map = { detail: '#sheet', profile: '#profileSheet' };
     var sheet = $(map[which] || '#sheet');
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    ['#sheet', '#profileSheet'].forEach(function (sel) {
+      var el = $(sel);
+      el.classList.remove('is-closing');
+      if (el !== sheet) el.hidden = true;
+    });
     sheet.hidden = false;
     $('#sheetMask').hidden = false;
     document.body.classList.add('no-scroll');
   }
+
+  /** 关闭弹层：先播放收起动画，再真正移除；遮罩与滚动锁同步复位 */
   function closeSheets() {
-    $('#sheet').hidden = true;
-    $('#profileSheet').hidden = true;
+    var open = ['#sheet', '#profileSheet'].map(function (sel) { return $(sel); })
+      .filter(function (el) { return el && !el.hidden; });
     $('#sheetMask').hidden = true;
     document.body.classList.remove('no-scroll');
+    if (!open.length) return;
+
+    open.forEach(function (el) { el.classList.add('is-closing'); });
+    if (closeTimer) clearTimeout(closeTimer);
+    closeTimer = setTimeout(function () {
+      open.forEach(function (el) {
+        el.hidden = true;
+        el.classList.remove('is-closing');
+      });
+      closeTimer = null;
+    }, 170);
   }
 
   /* ---------------- 视图切换 ---------------- */
@@ -84,7 +105,7 @@
     var p = store.profile();
     var html = '';
     html += '<h2 class="detail-title">设置我的情况</h2>';
-    html += '<p class="form-hint" style="margin-bottom:14px">用来筛哪些活动你够条件。只存在你这台设备上，不会传出去。</p>';
+    html += '<p class="form-hint" style="margin-bottom:14px">用来筛哪些活动你够条件。</p>';
 
     html += '<div class="field-row"><label>我的年级</label><div class="pill-row" id="pickGrade">';
     GRADES.forEach(function (g) {

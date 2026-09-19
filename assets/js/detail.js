@@ -167,7 +167,7 @@
       html += '<button class="btn primary" id="dJoin" type="button"' + (closed ? ' disabled style="opacity:.5"' : '') + '>' + label + '</button>';
     }
     html += '</div>';
-    html += '<div class="form-hint" style="margin-top:8px">这里不会真替你报名，只是把“我想去”记在你自己的设备上，刷新也还在。</div>';
+    html += '<div class="form-hint" style="margin-top:8px">点一下会记进「我的」；正式报名还得按上面的方式联系对方。</div>';
 
     var body = document.getElementById('sheetBody');
     body.innerHTML = html;
