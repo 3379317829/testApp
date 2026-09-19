@@ -612,16 +612,41 @@
     $('#mineDot').classList.toggle('is-on', mineCount > 0);
   }
 
-  /** 分页栏：结果多于一页时出现 */
+  /** 页码序列：页数多时只列首尾与当前页附近，中间用省略号 */
+  function pageList(current, total) {
+    var out = [], i;
+    if (total <= 7) {
+      for (i = 1; i <= total; i++) out.push(i);
+      return out;
+    }
+    out.push(1);
+    var start = Math.max(2, current - 1);
+    var end = Math.min(total - 1, current + 1);
+    if (start > 2) out.push('gap');
+    for (i = start; i <= end; i++) out.push(i);
+    if (end < total - 1) out.push('gap');
+    out.push(total);
+    return out;
+  }
+
+  /** 分页栏：结果多于一页时出现，可直接选择页码 */
   function renderPager(total, pages, shown) {
     var pager = $('#pager');
     if (!pager) return;
     if (total <= PAGE_SIZE) { pager.hidden = true; pager.innerHTML = ''; return; }
     pager.hidden = false;
+
+    var nums = pageList(S.page, pages).map(function (p) {
+      if (p === 'gap') return '<span class="page-gap" aria-hidden="true">…</span>';
+      return '<button class="page-btn page-num' + (p === S.page ? ' is-active' : '') + '"' +
+        ' data-page="' + p + '" type="button"' +
+        (p === S.page ? ' aria-current="page"' : '') + '>' + p + '</button>';
+    }).join('');
+
     pager.innerHTML =
-      '<button class="page-btn" data-page="prev" type="button"' + (S.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
-      '<span class="page-info">第 ' + S.page + ' / ' + pages + ' 页 · 本页 ' + shown + ' 条</span>' +
-      '<button class="page-btn" data-page="next" type="button"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button>';
+      '<button class="page-btn page-nav" data-page="prev" type="button"' + (S.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      nums +
+      '<button class="page-btn page-nav" data-page="next" type="button"' + (S.page >= pages ? ' disabled' : '') + '>下一页</button>';
   }
 
   /** 翻页：重绘后把列表顶部对齐到视口上方 */
@@ -643,7 +668,10 @@
     $('#pager').addEventListener('click', function (ev) {
       var b = ev.target.closest('button[data-page]');
       if (!b || b.disabled) return;
-      goPage(b.dataset.page === 'next' ? S.page + 1 : S.page - 1);
+      var v = b.dataset.page;
+      if (v === 'prev') goPage(S.page - 1);
+      else if (v === 'next') goPage(S.page + 1);
+      else goPage(Number(v));
     });
 
     $('#quickbar').addEventListener('click', function (ev) {
