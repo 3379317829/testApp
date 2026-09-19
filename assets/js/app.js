@@ -86,8 +86,8 @@
     $('#publishPanel').classList.toggle('hidden', view !== 'publish');
     $('#adminPanel').classList.toggle('hidden', view !== 'admin');
 
-    /* 发现页的模块在非发现视图下隐藏，避免重复长列表 */
-    var discoverBlocks = ['#dataNotice', '#stats', '.panel[aria-label="筛选"]', '#list'];
+    /* 发现页的模块在非发现视图下隐藏，避免重复长列表；分页栏只服务于发现页列表 */
+    var discoverBlocks = ['#dataNotice', '#stats', '.panel[aria-label="筛选"]', '#list', '#pager'];
     discoverBlocks.forEach(function (sel) {
       var node = $(sel);
       if (node) node.classList.toggle('hidden', view !== 'discover');
@@ -190,39 +190,63 @@
     });
   }
 
-  /* ---------------- 实名认证 ---------------- */
-  /** 未实名账号：向学校统一身份认证服务发起核验，自动获取实名信息并绑定 */
-  function renderVerifySheet() {
-    var acc = A.current();
-    var body = $('#verifyBody');
-    if (!acc) return;
+  /* ---------------- 实名认证 / 账号开通 ---------------- */
+  var verifyMode = null;   /* null = 已登录账号实名；{ studentId, password } = 未登录时核验开通账号 */
 
-    if (A.isVerified()) {
+  function openVerify() {
+    verifyMode = null;
+    renderVerifySheet();
+    openSheet('verify');
+  }
+
+  /** 尚未开通账号：带上登录页填写的学号与密码，核验通过后直接开通并登录 */
+  function openVerifyForSignup(studentId, password) {
+    verifyMode = { studentId: studentId, password: password };
+    renderVerifySheet();
+    openSheet('verify');
+  }
+
+  function renderVerifySheet() {
+    var body = $('#verifyBody');
+    if (!body) return;
+
+    var signup = verifyMode;          /* 开通模式 */
+    var acc = A.current();
+
+    if (!signup && !acc) return;
+    if (!signup && A.isVerified()) {
       body.innerHTML = '<h2 class="detail-title">实名认证</h2>' +
         '<div class="callout info" style="margin-top:12px">该账号已完成实名认证：' +
         esc(acc.realName) + ' · 学号 ' + esc(acc.studentId) + '</div>';
       return;
     }
 
+    var targetId = signup ? signup.studentId : (acc.studentId || '');
+    var actLabel = signup ? '核验并开通账号' : '获取实名信息并绑定';
+    var backLabel = signup ? '暂不开通' : '暂不认证';
+
     var html = '';
-    html += '<h2 class="detail-title">实名认证</h2>';
+    html += '<h2 class="detail-title">' + (signup ? '核验身份并开通账号' : '实名认证') + '</h2>';
     html += '<p class="form-hint" style="margin-bottom:12px">' +
-      '当前账号已通过学号登录。点击下方按钮向「我的珠科」发起身份核验，' +
-      '系统将自动获取姓名并完成绑定，无需手动填写。</p>';
+      (signup
+        ? '将使用该学号向「我的珠科」发起身份核验，核验通过后自动开通账号并登录，无需另外注册。'
+        : '当前账号已通过学号登录。点击下方按钮向「我的珠科」发起身份核验，系统将自动获取姓名并完成绑定，无需手动填写。') +
+      '</p>';
 
     html += '<div class="callout info" style="margin-bottom:14px">' +
-      '<b>关于本功能：</b>实名认证需调用学校统一身份认证服务（我的珠科APP），由服务端核验身份并返回实名信息。' +
-      '<br><span style="opacity:.85">当前版本尚未接入该服务，点击后由本地模拟返回结果，用于演示认证流程；' +
-      '接入后姓名与学号均以服务端返回为准。</span></div>';
+      '<b>关于本功能：</b>' + (signup ? '账号开通' : '实名认证') +
+      '需调用学校统一身份认证服务（我的珠科APP），由服务端核验身份并返回实名信息。' +
+      '<br><span style="opacity:.85">当前版本尚未接入该服务，点击后由本地模拟返回结果，用于演示' +
+      (signup ? '开通' : '认证') + '流程；接入后姓名与学号均以服务端返回为准。</span></div>';
 
-    html += '<div class="kv"><dt>核验学号</dt><dd>' + esc(acc.studentId || '未提供') + '</dd></div>';
+    html += '<div class="kv"><dt>核验学号</dt><dd>' + esc(targetId || '未提供') + '</dd></div>';
     html += '<div class="kv"><dt>获取内容</dt><dd>真实姓名、学号</dd></div>';
 
     html += '<p class="login-err" id="vfErr" hidden></p>';
     html += '<div class="form-actions" style="margin-top:14px">' +
-      '<button class="btn primary" id="vfSubmit" type="button">获取实名信息并绑定</button>' +
-      '<button class="btn ghost" id="vfCancel" type="button">暂不认证</button></div>';
-    html += '<p class="agree-note">点击「获取实名信息并绑定」即表示你同意平台通过学校统一身份认证服务' +
+      '<button class="btn primary" id="vfSubmit" type="button">' + actLabel + '</button>' +
+      '<button class="btn ghost" id="vfCancel" type="button">' + backLabel + '</button></div>';
+    html += '<p class="agree-note">点击「' + actLabel + '」即表示你同意平台通过学校统一身份认证服务' +
       '获取并使用你的姓名、学号信息，用于身份核验与内容归属标识。</p>';
 
     body.innerHTML = html;
@@ -232,7 +256,7 @@
 
     function fail(errors) {
       btn.disabled = false;
-      btn.textContent = '获取实名信息并绑定';
+      btn.textContent = actLabel;
       err.innerHTML = errors.map(function (e) { return '· ' + esc(e); }).join('<br>');
       err.hidden = false;
     }
@@ -244,9 +268,26 @@
 
       /* 模拟一次网络往返；接入真实服务后此处改为请求统一身份认证接口 */
       setTimeout(function () {
-        var auth = A.fetchIdentity();
+        var auth = A.fetchIdentity(targetId);
         if (!auth.ok) { fail(auth.errors); return; }
 
+        /* 开通模式：核验通过即创建账号并直接登录 */
+        if (signup) {
+          var reg = A.registerBySSO({
+            studentId: auth.data.studentId,
+            password: signup.password,
+            name: auth.data.name
+          });
+          if (!reg.ok) { fail([reg.message]); return; }
+          verifyMode = null;
+          closeSheets();
+          hideLogin();
+          startApp();
+          toast('账号已开通，欢迎你，' + reg.account.realName);
+          return;
+        }
+
+        /* 认证模式：把服务端返回的实名信息写入当前账号 */
         var res = A.verify({ realName: auth.data.name, studentId: auth.data.studentId });
         if (!res.ok) { fail(res.errors); return; }
 
@@ -260,11 +301,6 @@
     });
 
     $('#vfCancel').addEventListener('click', closeSheets);
-  }
-
-  function openVerify() {
-    renderVerifySheet();
-    openSheet('verify');
   }
 
   function kvRow(label, value) {
@@ -321,6 +357,23 @@
     $('#loginForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       doLogin($('#loginUser').value, $('#loginPass').value);
+    });
+
+    /* 尚未开通账号：用登录页填写的学号发起核验，通过后自动开通并登录。
+       演示环境不校验密码，只要求填写学号即可进入核验。 */
+    $('#loginSignup').addEventListener('click', function () {
+      var err = $('#loginErr');
+      var sid = $('#loginUser').value.trim();
+
+      if (!sid) {
+        err.textContent = '请先填写学号，再发起身份核验';
+        err.hidden = false;
+        $('#loginUser').focus();
+        return;
+      }
+      err.textContent = '';
+      err.hidden = true;
+      openVerifyForSignup(sid, $('#loginPass').value);
     });
 
     $$('#loginView .demo-item').forEach(function (btn) {

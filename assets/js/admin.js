@@ -36,7 +36,8 @@
       '</div>' +
       (s.riskyPosts
         ? '<div class="callout warn" style="margin-bottom:12px">当前有 <b>' + s.riskyPosts +
-          '</b> 条内容被系统标记为疑似风险或推广，建议核查后处理。</div>'
+          '</b> 条内容被系统标记为疑似风险或推广，建议核查后处理。' +
+          '<button class="link-btn risky-go" id="goRisky" type="button">立即核查</button></div>'
         : '');
   }
 
@@ -73,7 +74,8 @@
     var posts = A.postsOf(acc.id);
     var html = '';
 
-    html += '<div class="acct' + (acc.status === 'banned' ? ' is-banned' : '') + '">';
+    html += '<div class="acct' + (acc.status === 'banned' ? ' is-banned' : '') +
+      '" data-acc="' + acc.id + '">';
     html += '<div class="acct-head">';
     html += '<div class="acct-main">';
     html += '<div class="acct-name">' + ui.esc(acc.realName || '未实名账号') +
@@ -120,7 +122,8 @@
       } else {
         posts.forEach(function (p) {
           var risk = p.risk ? badge(p.risk.type, p.risk.level === 'high' ? 'urgent' : 'warn') : badge('正常', 'open');
-          html += '<div class="acct-post">' +
+          html += '<div class="acct-post' + (p.risk ? ' is-risk' : '') +
+            '" data-post="' + p.id + '">' +
             '<div class="acct-post-main">' +
             '<div class="mini-title">' + ui.esc(p.title) + '</div>' +
             '<div class="mini-sub">' + ui.esc(p.timeText || '时间待定') + ' · ' +
@@ -190,6 +193,39 @@
       });
       document.getElementById('nuErr').hidden = true;
     });
+
+    /* 风险内容快捷核查 */
+    var goRisky = document.getElementById('goRisky');
+    if (goRisky) goRisky.addEventListener('click', jumpToRisky);
+  }
+
+  /** 快捷核查：展开存在风险内容的账号，并定位到第一条风险内容 */
+  function jumpToRisky() {
+    var posts = store.all().mine || [];
+    var risky = posts.filter(function (p) { return p.risk; })[0];
+    if (!risky) return;
+
+    /* 目标账号可能不在当前搜索结果内，先清掉筛选再展开 */
+    keyword = '';
+    expanded = risky.ownerId;
+    pending = null;
+    render();
+
+    setTimeout(function () {
+      var accEl = document.querySelector('.acct[data-acc="' + risky.ownerId + '"]');
+      if (!accEl) return;
+      var postEl = accEl.querySelector('.acct-post[data-post="' + risky.id + '"]') || accEl;
+      var top = postEl.getBoundingClientRect().top + window.scrollY - 90;
+      /* 跳转定位用瞬时滚动：目标立刻进入视口，配合高亮更容易注意到 */
+      window.scrollTo(0, Math.max(top, 0));
+
+      accEl.classList.add('is-flash');
+      if (postEl !== accEl) postEl.classList.add('is-flash');
+      setTimeout(function () {
+        accEl.classList.remove('is-flash');
+        if (postEl !== accEl) postEl.classList.remove('is-flash');
+      }, 2000);
+    }, 80);
   }
 
   function createAccount() {

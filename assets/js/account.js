@@ -271,19 +271,13 @@
      * 密码只过一次网络，不在前端留存、不写入本地存储；姓名等实名信息一律以服务端返回为准。
      * 当前版本未接入该服务，以下用本地规则模拟服务端返回结果。
      * ----------------------------------------------------------------------------------- */
-    fetchIdentity: function () {
+    /** 发起身份核验换取实名信息；未登录（开通账号）时传入待核验的学号 */
+    fetchIdentity: function (studentIdInput) {
       var cur = account.current();
-      if (!cur) return { ok: false, errors: ['登录状态已失效，请重新登录'] };
-
-      var studentId = String(cur.studentId || '').trim();
+      var studentId = String(studentIdInput || (cur && cur.studentId) || '').trim();
       if (!/^\d{6,14}$/.test(studentId)) {
-        return { ok: false, errors: ['当前账号未绑定有效学号，无法发起身份核验'] };
+        return { ok: false, errors: ['请填写有效的学号（6—14 位数字）后再发起核验'] };
       }
-
-      var dup = rawAccounts().filter(function (a) {
-        return a.studentId === studentId && a.id !== cur.id;
-      })[0];
-      if (dup) return { ok: false, errors: ['该学号已被其他账号绑定（实名制下一人一号）'] };
 
       /* ↓↓↓ 模拟服务端返回，接入学校统一身份认证后整段删除 ↓↓↓ */
       var sum = studentId.split('').reduce(function (s, c) { return s + (Number(c) || 0); }, 0);
@@ -291,6 +285,43 @@
       /* ↑↑↑ 模拟结束 ↑↑↑ */
 
       return { ok: true, source: 'mock', data: { studentId: studentId, name: name } };
+    },
+
+    /** 身份核验通过后开通账号：学号即登录标识，账号直接视为已实名并建立会话 */
+    registerBySSO: function (payload) {
+      var studentId = String(payload.studentId || '').trim();
+      /* 演示环境不校验密码：留空时给一个默认值，保证后续仍可用学号登录 */
+      var password = String(payload.password || '') || '123456';
+      var name = String(payload.name || '').trim();
+
+      if (!/^\d{6,14}$/.test(studentId)) {
+        return { ok: false, message: '学号格式不正确，无法开通账号' };
+      }
+      if (!/^[\u4e00-\u9fa5·]{2,10}$/.test(name)) {
+        return { ok: false, message: '身份信息不完整，请稍后重试' };
+      }
+
+      var exist = rawAccounts().filter(function (a) { return a.studentId === studentId; })[0];
+      if (exist) return { ok: false, message: '该学号已开通账号，请直接使用学号与密码登录' };
+
+      var acc = {
+        id: uid(),
+        username: studentId,
+        password: password,
+        realName: name,
+        studentId: studentId,
+        role: 'student',
+        status: 'active',
+        verified: true,
+        verifiedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        via: 'sso'
+      };
+      var s = store.all();
+      s.accounts.push(acc);
+      s.session = { accountId: acc.id, at: new Date().toISOString() };
+      store.save();
+      return { ok: true, account: normalize(acc) };
     },
 
     /** 新增账号（仅管理员可用，界面侧限制入口） */

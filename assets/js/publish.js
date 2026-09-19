@@ -103,8 +103,8 @@
 
       '<div class="field-row"><label>活动时间</label>' +
       '<input id="pTime" type="datetime-local">' +
-      '<label class="switch" style="margin-top:6px;font-size:12.5px;color:var(--muted)">' +
-      '<input type="checkbox" id="pTimeUnknown"> 时间待定 / 待确认</label></div>' +
+      '<label class="inline-check">' +
+      '<input type="checkbox" id="pTimeUnknown"><span>时间待定 / 待确认</span></label></div>' +
 
       '<div class="field-row"><label>活动地点</label>' +
       '<input id="pPlace" type="text" maxlength="30" placeholder="例：体育馆 3 号场（未定可留空）"></div>' +
